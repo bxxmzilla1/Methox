@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { SignOutButton } from "@/components/SignOutButton";
 import { DeleteLinkButton } from "@/components/DeleteLinkButton";
+import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { APP_NAME } from "@/lib/constants";
 import { publicScreenshotUrl } from "@/lib/storage";
 import { statsForLinks } from "@/lib/stats";
@@ -28,6 +30,14 @@ export default async function DashboardPage() {
   }
 
   const stats = statsForLinks(clickRows);
+
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "";
+  const proto = h.get("x-forwarded-proto") ?? "https";
+  const siteBase = (
+    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ??
+    (host ? `${proto}://${host}` : "")
+  );
 
   return (
     <div className="flex min-h-full flex-col">
@@ -68,24 +78,21 @@ export default async function DashboardPage() {
             {links.map((link) => {
               const s = stats.get(link.id);
               const shotUrl = publicScreenshotUrl(link.screenshot_path);
+              const publicUrl = siteBase ? `${siteBase}/${link.slug}` : `/${link.slug}`;
               return (
                 <li
                   key={link.id}
                   className="rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-4"
                 >
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-stretch">
-                    <div className="shrink-0 sm:w-40">
+                    <div className="flex shrink-0 justify-center sm:justify-start">
                       {shotUrl ? (
-                        <div className="overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950">
+                        <div className="relative w-36 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 shadow-lg shadow-black/30 sm:w-40 aspect-[9/16]">
                           {/* eslint-disable-next-line @next/next/no-img-element -- Supabase public URL */}
-                          <img
-                            src={shotUrl}
-                            alt=""
-                            className="aspect-video w-full object-cover sm:aspect-[4/3] sm:h-28 sm:w-full"
-                          />
+                          <img src={shotUrl} alt="" className="h-full w-full object-cover" />
                         </div>
                       ) : (
-                        <div className="flex aspect-video w-full items-center justify-center rounded-lg border border-dashed border-zinc-700 bg-zinc-950/80 text-xs text-zinc-600 sm:aspect-[4/3] sm:h-28">
+                        <div className="flex w-36 items-center justify-center rounded-xl border border-dashed border-zinc-700 bg-zinc-950/80 text-center text-xs leading-snug text-zinc-600 sm:w-40 aspect-[9/16]">
                           No screenshot
                         </div>
                       )}
@@ -130,6 +137,7 @@ export default async function DashboardPage() {
                     </div>
 
                     <div className="flex shrink-0 flex-wrap gap-2 sm:flex-col sm:justify-start">
+                      <CopyLinkButton url={publicUrl} />
                       <Link
                         href={`/${link.slug}`}
                         target="_blank"
