@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { SignOutButton } from "@/components/SignOutButton";
 import { DeleteLinkButton } from "@/components/DeleteLinkButton";
 import { APP_NAME } from "@/lib/constants";
+import { publicScreenshotUrl } from "@/lib/storage";
 import { statsForLinks } from "@/lib/stats";
 
 export default async function DashboardPage() {
@@ -15,7 +16,7 @@ export default async function DashboardPage() {
 
   const { data: links } = await supabase
     .from("links")
-    .select("id, slug, bio, destination_url, created_at")
+    .select("id, slug, bio, screenshot_path, destination_url, created_at")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -66,52 +67,85 @@ export default async function DashboardPage() {
           <ul className="mt-8 flex flex-col gap-3">
             {links.map((link) => {
               const s = stats.get(link.id);
+              const shotUrl = publicScreenshotUrl(link.screenshot_path);
               return (
                 <li
                   key={link.id}
-                  className="flex flex-col gap-3 rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+                  className="rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-4"
                 >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <code className="rounded bg-zinc-800 px-2 py-0.5 text-sm text-emerald-300">/{link.slug}</code>
-                      <span className="text-xs text-zinc-500">
-                        {s ? (
-                          <>
-                            <span className="text-zinc-400">{s.totalClicks}</span> visits ·{" "}
-                            <span className="text-zinc-400">{s.uniqueVisitors}</span> uniques
-                          </>
-                        ) : (
-                          "No visits yet"
-                        )}
-                      </span>
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-stretch">
+                    <div className="shrink-0 sm:w-40">
+                      {shotUrl ? (
+                        <div className="overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950">
+                          {/* eslint-disable-next-line @next/next/no-img-element -- Supabase public URL */}
+                          <img
+                            src={shotUrl}
+                            alt=""
+                            className="aspect-video w-full object-cover sm:aspect-[4/3] sm:h-28 sm:w-full"
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex aspect-video w-full items-center justify-center rounded-lg border border-dashed border-zinc-700 bg-zinc-950/80 text-xs text-zinc-600 sm:aspect-[4/3] sm:h-28">
+                          No screenshot
+                        </div>
+                      )}
                     </div>
-                    {s && s.topCountries.length > 0 && (
-                      <p className="mt-1.5 text-xs text-zinc-500">
-                        Countries:{" "}
-                        {s.topCountries.map((c) => (
-                          <span key={c.code} className="mr-2 inline-block text-zinc-400">
-                            {c.code} ({c.count})
-                          </span>
-                        ))}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex shrink-0 flex-wrap gap-2">
-                    <Link
-                      href={`/${link.slug}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded-lg border border-zinc-600 px-3 py-1.5 text-xs font-medium text-zinc-200 transition hover:bg-zinc-800"
-                    >
-                      Open
-                    </Link>
-                    <Link
-                      href={`/dashboard/${encodeURIComponent(link.slug)}/edit`}
-                      className="rounded-lg border border-zinc-600 px-3 py-1.5 text-xs font-medium text-zinc-200 transition hover:bg-zinc-800"
-                    >
-                      Edit
-                    </Link>
-                    <DeleteLinkButton linkId={link.id} />
+
+                    <div className="min-w-0 flex-1 space-y-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <code className="rounded bg-zinc-800 px-2 py-0.5 text-sm text-emerald-300">
+                          /{link.slug}
+                        </code>
+                        <span className="text-xs text-zinc-500">
+                          {s ? (
+                            <>
+                              <span className="text-zinc-400">{s.totalClicks}</span> visits ·{" "}
+                              <span className="text-zinc-400">{s.uniqueVisitors}</span> uniques
+                            </>
+                          ) : (
+                            "No visits yet"
+                          )}
+                        </span>
+                      </div>
+                      {s && s.topCountries.length > 0 && (
+                        <p className="text-xs text-zinc-500">
+                          Countries:{" "}
+                          {s.topCountries.map((c) => (
+                            <span key={c.code} className="mr-2 inline-block text-zinc-400">
+                              {c.code} ({c.count})
+                            </span>
+                          ))}
+                        </p>
+                      )}
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-widest text-emerald-500/90">
+                          Bio
+                        </p>
+                        <p className="mt-1.5 max-h-32 overflow-y-auto text-sm leading-relaxed whitespace-pre-wrap text-zinc-300">
+                          {link.bio?.trim() ? link.bio : (
+                            <span className="text-zinc-600">No bio yet.</span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex shrink-0 flex-wrap gap-2 sm:flex-col sm:justify-start">
+                      <Link
+                        href={`/${link.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-lg border border-zinc-600 px-3 py-1.5 text-center text-xs font-medium text-zinc-200 transition hover:bg-zinc-800"
+                      >
+                        Open
+                      </Link>
+                      <Link
+                        href={`/dashboard/${encodeURIComponent(link.slug)}/edit`}
+                        className="rounded-lg border border-zinc-600 px-3 py-1.5 text-center text-xs font-medium text-zinc-200 transition hover:bg-zinc-800"
+                      >
+                        Edit
+                      </Link>
+                      <DeleteLinkButton linkId={link.id} />
+                    </div>
                   </div>
                 </li>
               );
