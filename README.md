@@ -31,13 +31,15 @@ git push -u origin main
 
 1. In [Vercel](https://vercel.com), **Add New… → Project** and import the GitHub repo.
 2. Vercel will detect **Next.js**. Use the default install/build (this app uses `npm run build`, which runs `next build --webpack` for the PWA).
-3. Under **Environment Variables**, add (for **Production** at minimum):
+3. Under **Environment Variables**, add for **Production** (and Preview if you use it):
 
    | Name | Value |
    |------|--------|
    | `NEXT_PUBLIC_SUPABASE_URL` | Supabase **Project URL** |
    | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase **anon public** key |
    | `NEXT_PUBLIC_APP_URL` | Your live site URL, e.g. `https://YOUR_APP.vercel.app` |
+
+   These must be set **before** the app can log in or hit the dashboard at **runtime**. (The Vercel build can succeed without them, but pages that use Supabase will error when opened until the variables exist.)
 
 4. Deploy. After the first deploy, set `NEXT_PUBLIC_APP_URL` to the exact production URL if it differs from what you guessed, then redeploy so email auth redirects stay correct.
 
