@@ -153,17 +153,9 @@ export function LinkForm(props: Props) {
         />
       </label>
 
-      <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-zinc-300">Destination URL (optional)</span>
-        <input
-          name="destination_url"
-          type="url"
-          defaultValue={link?.destination_url ?? ""}
-          placeholder="https://…"
-          className="rounded-lg border border-zinc-700 bg-zinc-900/80 px-3 py-2 text-zinc-100 outline-none placeholder:text-zinc-600"
-        />
-        <span className="text-xs text-zinc-500">Optional; kept for when your public page goes live.</span>
-      </label>
+      {isEdit && (
+        <input type="hidden" name="destination_url" defaultValue={link?.destination_url ?? ""} />
+      )}
 
       <label className="flex flex-col gap-1.5">
         <span className="text-sm font-medium text-zinc-300">Screenshot</span>
