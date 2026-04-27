@@ -7,7 +7,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /* Skip static assets, images, PWA manifest, and service worker (avoids extra session work / odd 401s on manifest). */
-    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|webmanifest)$).*)",
+    "/((?!_next/static|_next/image|favicon\\.ico|manifest\\.webmanifest|sw\\.js|workbox-|swe-worker-|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|webmanifest)$).*)",
   ],
 };

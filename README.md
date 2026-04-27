@@ -78,6 +78,26 @@ Production builds register a service worker (`@ducanh2912/next-pwa`). Generated 
 
 ---
 
+## Troubleshooting
+
+### “Could not find the `username` column of `links`”
+
+Your Supabase database was created before that field existed. In the Supabase **SQL Editor**, run:
+
+```sql
+alter table public.links
+  add column if not exists username text not null default '';
+```
+
+Then try **Create link** again (no app redeploy required).
+
+### `manifest.webmanifest` returns **401** in the browser
+
+- **Vercel:** If **Deployment Protection** (password / SSO) is on, unauthenticated fetches (including the PWA manifest) can get 401. Turn protection off for this project, or use a setup that allows public access to the site.
+- After pulling the latest code, the middleware matcher also skips `manifest.webmanifest` and `sw.js` so session refresh does not run on those URLs.
+
+---
+
 ## CI
 
 GitHub Actions runs **lint** and **build** on pushes and PRs to `main` / `master` (see `.github/workflows/ci.yml`).
