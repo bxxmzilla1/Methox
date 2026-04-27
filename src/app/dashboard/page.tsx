@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { SignOutButton } from "@/components/SignOutButton";
 import { DeleteLinkButton } from "@/components/DeleteLinkButton";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
+import { CountryChart } from "@/components/CountryChart";
+import { ZoomableScreenshot } from "@/components/ZoomableScreenshot";
 import { APP_NAME } from "@/lib/constants";
 import { publicScreenshotUrl } from "@/lib/storage";
 import { statsForLinks } from "@/lib/stats";
@@ -87,10 +89,10 @@ export default async function DashboardPage() {
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-stretch">
                     <div className="flex shrink-0 justify-center sm:justify-start">
                       {shotUrl ? (
-                        <div className="relative w-36 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 shadow-lg shadow-black/30 sm:w-40 aspect-[9/16]">
-                          {/* eslint-disable-next-line @next/next/no-img-element -- Supabase public URL */}
-                          <img src={shotUrl} alt="" className="h-full w-full object-cover" />
-                        </div>
+                        <ZoomableScreenshot
+                          src={shotUrl}
+                          className="relative w-36 rounded-xl border border-zinc-800 bg-zinc-950 shadow-lg shadow-black/30 sm:w-40 aspect-[9/16]"
+                        />
                       ) : (
                         <div className="flex w-36 items-center justify-center rounded-xl border border-dashed border-zinc-700 bg-zinc-950/80 text-center text-xs leading-snug text-zinc-600 sm:w-40 aspect-[9/16]">
                           No screenshot
@@ -114,15 +116,8 @@ export default async function DashboardPage() {
                           )}
                         </span>
                       </div>
-                      {s && s.topCountries.length > 0 && (
-                        <p className="text-xs text-zinc-500">
-                          Countries:{" "}
-                          {s.topCountries.map((c) => (
-                            <span key={c.code} className="mr-2 inline-block text-zinc-400">
-                              {c.code} ({c.count})
-                            </span>
-                          ))}
-                        </p>
+                      {s && s.countries.length > 0 && (
+                        <CountryChart items={s.countries} totalClicks={s.totalClicks} />
                       )}
                       <div>
                         <p className="text-xs font-semibold uppercase tracking-widest text-emerald-500/90">

@@ -3,7 +3,8 @@ export type ClickRow = { link_id: string; visitor_id: string; country: string };
 export type LinkStats = {
   totalClicks: number;
   uniqueVisitors: number;
-  topCountries: { code: string; count: number }[];
+  /** All country codes with visit counts, highest first (for charts). */
+  countries: { code: string; count: number }[];
 };
 
 export function statsForLinks(rows: ClickRow[] | null): Map<string, LinkStats> {
@@ -26,14 +27,13 @@ export function statsForLinks(rows: ClickRow[] | null): Map<string, LinkStats> {
 
   const out = new Map<string, LinkStats>();
   byLink.forEach((v, linkId) => {
-    const topCountries = [...v.countryHits.entries()]
+    const countries = [...v.countryHits.entries()]
       .map(([code, count]) => ({ code, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
+      .sort((a, b) => b.count - a.count);
     out.set(linkId, {
       totalClicks: v.total,
       uniqueVisitors: v.visitors.size,
-      topCountries,
+      countries,
     });
   });
   return out;
