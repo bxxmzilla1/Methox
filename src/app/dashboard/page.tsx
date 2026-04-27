@@ -6,7 +6,7 @@ import { SignOutButton } from "@/components/SignOutButton";
 import { DeleteLinkButton } from "@/components/DeleteLinkButton";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { CountryChart } from "@/components/CountryChart";
-import { ZoomableScreenshot } from "@/components/ZoomableScreenshot";
+import { ScreenshotLightbox } from "@/components/ScreenshotLightbox";
 import { APP_NAME } from "@/lib/constants";
 import { publicScreenshotUrl } from "@/lib/storage";
 import { statsForLinks } from "@/lib/stats";
@@ -20,7 +20,7 @@ export default async function DashboardPage() {
 
   const { data: links } = await supabase
     .from("links")
-    .select("id, slug, bio, screenshot_path, destination_url, created_at")
+    .select("id, slug, username, bio, screenshot_path, destination_url, created_at")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -89,9 +89,9 @@ export default async function DashboardPage() {
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-stretch">
                     <div className="flex shrink-0 justify-center sm:justify-start">
                       {shotUrl ? (
-                        <ZoomableScreenshot
+                        <ScreenshotLightbox
                           src={shotUrl}
-                          className="relative w-36 rounded-xl border border-zinc-800 bg-zinc-950 shadow-lg shadow-black/30 sm:w-40 aspect-[9/16]"
+                          thumbClassName="relative w-36 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 shadow-lg shadow-black/30 sm:w-40 aspect-[9/16]"
                         />
                       ) : (
                         <div className="flex w-36 items-center justify-center rounded-xl border border-dashed border-zinc-700 bg-zinc-950/80 text-center text-xs leading-snug text-zinc-600 sm:w-40 aspect-[9/16]">
@@ -102,6 +102,11 @@ export default async function DashboardPage() {
 
                     <div className="min-w-0 flex-1 space-y-3">
                       <div className="flex flex-wrap items-center gap-2">
+                        {link.username?.trim() && (
+                          <span className="rounded bg-zinc-800/80 px-2 py-0.5 text-sm text-zinc-200">
+                            @{link.username.trim()}
+                          </span>
+                        )}
                         <code className="rounded bg-zinc-800 px-2 py-0.5 text-sm text-emerald-300">
                           /{link.slug}
                         </code>

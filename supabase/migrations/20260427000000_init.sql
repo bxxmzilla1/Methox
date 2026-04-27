@@ -5,6 +5,7 @@ create table if not exists public.links (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,
   slug text not null unique,
+  username text not null default '',
   bio text not null default '',
   screenshot_path text,
   destination_url text,

@@ -17,7 +17,7 @@ export default async function EditLinkPage({ params }: { params: Promise<{ slug:
 
   const { data: row } = await supabase
     .from("links")
-    .select("id, user_id, slug, bio, screenshot_path, destination_url, created_at, updated_at")
+    .select("id, user_id, slug, username, bio, screenshot_path, destination_url, created_at, updated_at")
     .eq("slug", slug)
     .eq("user_id", user.id)
     .single();

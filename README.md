@@ -50,12 +50,13 @@ Country detection uses Vercel’s `x-vercel-ip-country` header on production req
 ## 3. Supabase (required before the app works)
 
 1. Open **SQL Editor** in Supabase and run `supabase/migrations/20260427000000_init.sql`.
-2. **Authentication → URL configuration → Redirect URLs** must include:
+2. If you created the database **before** the `username` column existed, also run `supabase/migrations/20260427120000_add_username.sql`.
+3. **Authentication → URL configuration → Redirect URLs** must include:
 
    - `https://YOUR_APP.vercel.app/auth/callback`  
    - (optional for local dev) `http://localhost:3000/auth/callback`
 
-3. For quick testing, you can disable **Confirm email** under **Authentication → Providers → Email**.
+4. For quick testing, you can disable **Confirm email** under **Authentication → Providers → Email**.
 
 ---
 

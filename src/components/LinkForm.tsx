@@ -131,12 +131,24 @@ export function LinkForm(props: Props) {
       )}
 
       <label className="flex flex-col gap-1.5">
+        <span className="text-sm font-medium text-zinc-300">Username</span>
+        <input
+          name="username"
+          type="text"
+          defaultValue={link?.username ?? ""}
+          placeholder="Display name"
+          autoComplete="username"
+          className="rounded-lg border border-zinc-700 bg-zinc-900/80 px-3 py-2 text-zinc-100 outline-none placeholder:text-zinc-600"
+        />
+      </label>
+
+      <label className="flex flex-col gap-1.5">
         <span className="text-sm font-medium text-zinc-300">Bio</span>
         <textarea
           name="bio"
           rows={5}
           defaultValue={link?.bio ?? ""}
-          placeholder="Text shown on your landing page…"
+          placeholder="Saved for when your public page goes live…"
           className="rounded-lg border border-zinc-700 bg-zinc-900/80 px-3 py-2 text-zinc-100 outline-none placeholder:text-zinc-600"
         />
       </label>
@@ -150,7 +162,7 @@ export function LinkForm(props: Props) {
           placeholder="https://…"
           className="rounded-lg border border-zinc-700 bg-zinc-900/80 px-3 py-2 text-zinc-100 outline-none placeholder:text-zinc-600"
         />
-        <span className="text-xs text-zinc-500">Shown as the main button after visitors land.</span>
+        <span className="text-xs text-zinc-500">Optional; kept for when your public page goes live.</span>
       </label>
 
       <label className="flex flex-col gap-1.5">

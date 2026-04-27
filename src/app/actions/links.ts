@@ -8,6 +8,7 @@ export type LinkRow = {
   id: string;
   user_id: string;
   slug: string;
+  username: string;
   bio: string;
   screenshot_path: string | null;
   destination_url: string | null;
@@ -23,6 +24,7 @@ export async function createLink(formData: FormData) {
   if (!user) return { error: "Sign in required." };
 
   const slug = String(formData.get("slug") ?? "").trim().toLowerCase();
+  const username = String(formData.get("username") ?? "").trim();
   const bio = String(formData.get("bio") ?? "");
   const destinationRaw = String(formData.get("destination_url") ?? "").trim();
   const destination_url = destinationRaw.length ? destinationRaw : null;
@@ -36,6 +38,7 @@ export async function createLink(formData: FormData) {
     .insert({
       user_id: user.id,
       slug,
+      username,
       bio,
       destination_url,
     })
@@ -63,11 +66,13 @@ export async function updateLink(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Sign in required." };
 
+  const username = String(formData.get("username") ?? "").trim();
   const bio = String(formData.get("bio") ?? "");
   const destinationRaw = String(formData.get("destination_url") ?? "").trim();
   const destination_url = destinationRaw.length ? destinationRaw : null;
 
   const patch: Record<string, unknown> = {
+    username,
     bio,
     destination_url,
     updated_at: new Date().toISOString(),
