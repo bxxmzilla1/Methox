@@ -18,8 +18,8 @@ export default async function PublicLinkPage({ params }: { params: Promise<{ slu
   return (
     <>
       <VisitorTracker linkId={link.id} />
-      <div className="flex min-h-full flex-1 flex-col items-center justify-center bg-white px-6 py-16 text-neutral-500">
-        <p className="text-lg font-medium tracking-wide text-neutral-400">coming soon...</p>
+      <div className="flex min-h-full flex-1 flex-col items-center justify-center bg-white px-6 py-16">
+        <p className="text-lg font-medium tracking-wide text-zinc-400">coming soon...</p>
       </div>
     </>
   );

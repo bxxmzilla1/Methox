@@ -9,6 +9,9 @@ type Props =
   | { mode: "create" }
   | { mode: "edit"; link: LinkRow };
 
+const inputClass =
+  "rounded-xl border border-zinc-200 bg-zinc-50/50 px-3 py-2.5 text-zinc-900 outline-none ring-emerald-500/0 transition placeholder:text-zinc-400 focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20";
+
 export function LinkForm(props: Props) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -115,14 +118,16 @@ export function LinkForm(props: Props) {
     <form onSubmit={(e) => void onSubmit(e)} className="flex max-w-lg flex-col gap-5">
       {props.mode === "create" && (
         <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-zinc-300">Path</span>
-          <div className="flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900/80 px-3 py-2 text-zinc-100">
-            <span className="shrink-0 text-zinc-500">/</span>
+          <span className="text-sm font-medium text-zinc-800">Path</span>
+          <div
+            className={`flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50/50 px-3 py-2.5 ring-emerald-500/0 transition focus-within:border-emerald-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-emerald-500/20`}
+          >
+            <span className="shrink-0 text-zinc-400">/</span>
             <input
               name="slug"
               required
               placeholder="example"
-              className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-zinc-600"
+              className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-zinc-400"
               autoComplete="off"
             />
           </div>
@@ -131,25 +136,25 @@ export function LinkForm(props: Props) {
       )}
 
       <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-zinc-300">Username</span>
+        <span className="text-sm font-medium text-zinc-800">Username</span>
         <input
           name="username"
           type="text"
           defaultValue={link?.username ?? ""}
           placeholder="Display name"
           autoComplete="username"
-          className="rounded-lg border border-zinc-700 bg-zinc-900/80 px-3 py-2 text-zinc-100 outline-none placeholder:text-zinc-600"
+          className={inputClass}
         />
       </label>
 
       <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-zinc-300">Bio</span>
+        <span className="text-sm font-medium text-zinc-800">Bio</span>
         <textarea
           name="bio"
           rows={5}
           defaultValue={link?.bio ?? ""}
           placeholder="Saved for when your public page goes live…"
-          className="rounded-lg border border-zinc-700 bg-zinc-900/80 px-3 py-2 text-zinc-100 outline-none placeholder:text-zinc-600"
+          className={`${inputClass} resize-y`}
         />
       </label>
 
@@ -158,24 +163,26 @@ export function LinkForm(props: Props) {
       )}
 
       <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-zinc-300">Screenshot</span>
+        <span className="text-sm font-medium text-zinc-800">Screenshot</span>
         <input
           type="file"
           accept="image/*"
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          className="text-sm text-zinc-400 file:mr-3 file:rounded-md file:border-0 file:bg-emerald-600 file:px-3 file:py-1.5 file:text-sm file:text-white"
+          className="text-sm text-zinc-600 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-emerald-600 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white file:shadow-sm hover:file:bg-emerald-500"
         />
         {isEdit && link?.screenshot_path && !file && (
           <span className="text-xs text-zinc-500">Current image kept unless you choose a new file.</span>
         )}
       </label>
 
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {error && (
+        <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>
+      )}
 
       <button
         type="submit"
         disabled={pending}
-        className="rounded-lg bg-emerald-600 px-4 py-2.5 font-medium text-white transition hover:bg-emerald-500 disabled:opacity-50"
+        className="rounded-xl bg-emerald-600 px-4 py-3 font-medium text-white shadow-md shadow-emerald-600/20 transition hover:bg-emerald-500 disabled:opacity-50"
       >
         {pending ? "Saving…" : isEdit ? "Save changes" : "Create link"}
       </button>

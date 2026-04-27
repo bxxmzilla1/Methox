@@ -12,7 +12,7 @@ export function DeleteLinkButton({ linkId }: { linkId: string }) {
     <button
       type="button"
       disabled={pending}
-      className="rounded-lg border border-red-900/60 px-2.5 py-1 text-xs text-red-300 transition hover:bg-red-950/50 disabled:opacity-50"
+      className="rounded-xl border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 transition hover:bg-red-100 disabled:opacity-50"
       onClick={() => {
         if (!confirm("Delete this link and all click history?")) return;
         setPending(true);

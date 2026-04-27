@@ -8,8 +8,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Trackable bio links with country analytics",
     start_url: "/",
     display: "standalone",
-    background_color: "#09090b",
-    theme_color: "#059669",
+    background_color: "#fafafa",
+    theme_color: "#10b981",
     icons: [
       {
         src: "/icons/icon-192.png",

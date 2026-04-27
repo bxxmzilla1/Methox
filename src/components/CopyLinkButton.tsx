@@ -30,7 +30,7 @@ export function CopyLinkButton({ url, className = "" }: Props) {
     <button
       type="button"
       onClick={onCopy}
-      className={`rounded-lg border border-zinc-600 px-3 py-1.5 text-center text-xs font-medium text-zinc-200 transition hover:bg-zinc-800 ${className}`}
+      className={`rounded-xl border border-zinc-200 bg-white px-3 py-1.5 text-center text-xs font-medium text-zinc-800 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50/50 ${className}`}
     >
       {label}
     </button>

@@ -13,14 +13,21 @@ export default async function NewLinkPage() {
 
   return (
     <div className="mx-auto min-h-full max-w-2xl px-6 py-10">
-      <Link href="/dashboard" className="text-sm text-emerald-400 hover:text-emerald-300">
+      <Link
+        href="/dashboard"
+        className="text-sm font-medium text-emerald-600 transition hover:text-emerald-700"
+      >
         ← Dashboard
       </Link>
-      <p className="mt-6 text-xs font-medium uppercase tracking-widest text-emerald-500/90">{APP_NAME}</p>
-      <h1 className="mt-2 text-2xl font-semibold text-white">New link</h1>
-      <p className="mt-2 text-sm text-zinc-400">Choose a path, bio, optional screenshot, and destination URL.</p>
+      <p className="mt-6 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-600/90">
+        {APP_NAME}
+      </p>
+      <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-900">New link</h1>
+      <p className="mt-2 text-sm text-zinc-600">
+        Choose a path, username, bio, and optional screenshot.
+      </p>
 
-      <div className="mt-8">
+      <div className="mt-8 rounded-2xl border border-zinc-200/90 bg-white p-8 shadow-lg shadow-zinc-200/30">
         <LinkForm mode="create" />
       </div>
     </div>
