@@ -147,7 +147,8 @@ export function PublicLanding({
       <div
         className={
           embedded
-            ? "relative h-40 w-full overflow-hidden bg-zinc-900"
+            ? /* ~upper half of a 9:16 frame at typical preview width (scales with phone column) */
+              "relative aspect-[9/8] w-full overflow-hidden bg-zinc-900"
             : "relative h-[min(42vh,420px)] w-full overflow-hidden bg-zinc-900"
         }
       >
@@ -168,7 +169,7 @@ export function PublicLanding({
       <div
         className={
           embedded
-            ? "relative z-10 -mt-14 max-w-full px-4 pb-14 pt-2"
+            ? "relative z-10 -mt-[4.25rem] max-w-full px-4 pb-14 pt-1"
             : "relative z-10 -mt-20 px-5 pb-16 pt-2"
         }
       >
@@ -176,7 +177,7 @@ export function PublicLanding({
           className={`mx-auto flex flex-col items-center text-center ${embedded ? "max-w-full" : "max-w-md"}`}
         >
           <h1
-            className={`flex flex-wrap items-center justify-center gap-1.5 font-bold tracking-tight ${embedded ? "text-2xl" : "text-3xl"}`}
+            className={`flex flex-wrap items-center justify-center gap-1.5 font-bold tracking-tight ${embedded ? "text-[1.65rem] leading-tight" : "text-3xl"}`}
           >
             <span>{name}</span>
             {verified && (
@@ -193,7 +194,9 @@ export function PublicLanding({
           {handleText && <p className="mt-1 text-sm text-zinc-400">{handleText}</p>}
 
           {bio.trim() && (
-            <p className="mt-5 max-w-prose whitespace-pre-wrap text-sm leading-relaxed text-zinc-200">
+            <p
+              className={`max-w-prose whitespace-pre-wrap text-sm leading-relaxed text-zinc-200 ${embedded ? "mt-4" : "mt-5"}`}
+            >
               {bio.trim()}
             </p>
           )}
