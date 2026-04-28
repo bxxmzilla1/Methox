@@ -153,29 +153,18 @@ export function DashboardSidebarClient({ links, statsByLinkId, siteBase }: Props
         <nav className="flex max-h-[42vh] gap-2 overflow-x-auto overflow-y-auto p-3 lg:max-h-none lg:flex-col lg:gap-1 lg:overflow-x-visible">
           {links.map((link) => {
             const s = statsByLinkId[link.id];
-            const thumb = publicScreenshotUrl(link.screenshot_path ?? link.hero_image_path ?? null);
             const active = link.id === selectedId;
             return (
               <button
                 key={link.id}
                 type="button"
                 onClick={() => setSelectedId(link.id)}
-                className={`flex w-full min-w-[200px] shrink-0 items-center gap-3 rounded-2xl border px-3 py-2.5 text-left transition lg:min-w-0 ${
+                className={`flex w-full min-w-[200px] shrink-0 items-center rounded-2xl border px-3 py-2.5 text-left transition lg:min-w-0 ${
                   active
                     ? "border-emerald-200 bg-emerald-50/90 shadow-sm shadow-emerald-900/5 ring-1 ring-emerald-500/15"
                     : "border-transparent bg-zinc-50/50 hover:border-zinc-200 hover:bg-white"
                 }`}
               >
-                <div className="relative h-14 w-11 shrink-0 overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200/80">
-                  {thumb ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={thumb} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-[10px] text-zinc-400">
-                      —
-                    </div>
-                  )}
-                </div>
                 <div className="min-w-0 flex-1">
                   <p className="flex flex-wrap items-center gap-2 truncate font-semibold text-zinc-900">
                     <span className="truncate">/{link.slug}</span>
