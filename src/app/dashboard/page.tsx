@@ -16,7 +16,7 @@ export default async function DashboardPage() {
 
   const { data: links } = await supabase
     .from("links")
-    .select("id, slug, username, bio, screenshot_path, created_at")
+    .select("id, slug, bio, screenshot_path, created_at")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 

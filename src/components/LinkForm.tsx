@@ -165,19 +165,6 @@ export function LinkForm(props: Props) {
         )}
       </label>
 
-      <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-zinc-800">Target Model</span>
-        <input
-          name="username"
-          type="text"
-          defaultValue={link?.username ?? ""}
-          placeholder="Optional"
-          autoComplete="off"
-          className={inputClass}
-        />
-        <span className="text-xs text-zinc-500">Optional — shown on your dashboard only.</span>
-      </label>
-
       {error && (
         <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>
       )}

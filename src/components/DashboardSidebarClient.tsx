@@ -12,7 +12,6 @@ import { ScreenshotLightbox } from "@/components/ScreenshotLightbox";
 export type DashboardLinkRow = {
   id: string;
   slug: string;
-  username: string;
   bio: string;
   screenshot_path: string | null;
   created_at: string;
@@ -120,12 +119,6 @@ export function DashboardSidebarClient({ links, statsByLinkId, siteBase }: Props
                   {selected.slug}
                 </h2>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
-                  {selected.username?.trim() && (
-                    <span className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium text-zinc-700 shadow-sm">
-                      <span className="text-zinc-500">Target model</span> ·{" "}
-                      {selected.username.trim()}
-                    </span>
-                  )}
                   {stats && (
                     <span className="rounded-full border border-emerald-100 bg-emerald-50/80 px-3 py-1 text-xs font-medium text-emerald-900">
                       {stats.totalClicks} visits · {stats.uniqueVisitors} uniques
