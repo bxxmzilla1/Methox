@@ -161,11 +161,6 @@ export function PublicLanding({
     () => applyGeoPlaceholders(bio.trim(), viewerGeo),
     [bio, viewerGeo]
   );
-  const unlockHintText = useMemo(() => {
-    const lockedWithHint = cards.find((c) => Boolean(c.locked) && Boolean(c.locked_hint));
-    if (!lockedWithHint) return null;
-    return lockedWithHint.locked_hint_text?.trim() || DEFAULT_LOCKED_HINT_TEXT;
-  }, [cards]);
   // Order is list order: first card is always the taller “featured” bar (no UI toggle).
   const top = cards[0];
   const rest = cards.slice(1);
@@ -229,14 +224,6 @@ export function PublicLanding({
               {bioResolved}
             </p>
           )}
-
-          {unlockHintText ? (
-            <div className={`${bio.trim() ? "mt-3" : "mt-5"} flex justify-center`}>
-              <span className="rounded-full bg-white/5 px-3 py-1 text-[11px] font-semibold tracking-wide text-white/75 ring-1 ring-white/10">
-                {unlockHintText}
-              </span>
-            </div>
-          ) : null}
         </div>
 
         {cards.length > 0 && (
