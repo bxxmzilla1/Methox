@@ -217,12 +217,25 @@ export function DashboardSidebarClient({ links, statsByLinkId, siteBase }: Props
                 <p className="mt-1 text-xs text-zinc-500">
                   Separate from the public landing editor (hero & link cards). Use <strong>Edit</strong> for those.
                 </p>
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  {stats && (
-                    <span className="rounded-full border border-emerald-100 bg-emerald-50/80 px-3 py-1 text-xs font-medium text-emerald-900">
-                      {stats.totalClicks} visits · {stats.uniqueVisitors} uniques
-                    </span>
-                  )}
+                <div className="mt-3 flex flex-wrap gap-3">
+                  <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50/95 to-teal-50/50 px-4 py-3 shadow-sm shadow-emerald-900/5 ring-1 ring-emerald-500/10">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-800/75">
+                      Clicks
+                    </p>
+                    <p className="mt-1 text-2xl font-bold tabular-nums tracking-tight text-emerald-950">
+                      {stats?.totalClicks ?? 0}
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-emerald-900/60">All visits to your link</p>
+                  </div>
+                  <div className="rounded-2xl border border-teal-100 bg-gradient-to-br from-white to-teal-50/40 px-4 py-3 shadow-sm shadow-teal-900/5 ring-1 ring-teal-500/10">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-teal-800/75">
+                      Unique visitors
+                    </p>
+                    <p className="mt-1 text-2xl font-bold tabular-nums tracking-tight text-zinc-900">
+                      {stats?.uniqueVisitors ?? 0}
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-zinc-500">Distinct visitor cookies</p>
+                  </div>
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -252,55 +265,73 @@ export function DashboardSidebarClient({ links, statsByLinkId, siteBase }: Props
               </div>
             </div>
 
-            <div className="flex flex-1 flex-col gap-8">
-              <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:justify-center lg:justify-start">
-                <div className="relative w-full max-w-[280px]">
-                  <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-emerald-200/30 via-teal-100/20 to-transparent blur-2xl" />
-                  <div className="relative rounded-[2rem] bg-gradient-to-b from-white to-zinc-50 p-4 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.12)] ring-1 ring-zinc-200/80">
-                    {savedShotUrl ? (
-                      <ScreenshotLightbox
-                        src={savedShotUrl}
-                        thumbClassName="relative mx-auto aspect-[9/16] w-full max-w-[240px] overflow-hidden rounded-2xl bg-zinc-100 shadow-inner ring-1 ring-black/5"
-                      />
-                    ) : (
-                      <div className="flex aspect-[9/16] w-full max-w-[240px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-200 bg-zinc-50/80 text-center text-sm text-zinc-400">
-                        No dashboard preview
-                      </div>
-                    )}
-                    <p className="mt-3 text-center text-[11px] font-medium text-zinc-400">
-                      Tap image to view full screen
-                    </p>
+            <div className="flex flex-1 flex-col gap-6">
+              <div className="grid gap-6 lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)] lg:items-start lg:gap-8">
+                <div className="mx-auto w-full max-w-[280px] lg:mx-0">
+                  <div className="relative">
+                    <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-emerald-200/30 via-teal-100/20 to-transparent blur-2xl" />
+                    <div className="relative rounded-[2rem] bg-gradient-to-b from-white to-zinc-50 p-4 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.12)] ring-1 ring-zinc-200/80">
+                      {savedShotUrl ? (
+                        <ScreenshotLightbox
+                          src={savedShotUrl}
+                          thumbClassName="relative mx-auto aspect-[9/16] w-full max-w-[240px] overflow-hidden rounded-2xl bg-zinc-100 shadow-inner ring-1 ring-black/5"
+                        />
+                      ) : (
+                        <div className="flex aspect-[9/16] w-full max-w-[240px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-200 bg-zinc-50/80 text-center text-sm text-zinc-400">
+                          No dashboard preview
+                        </div>
+                      )}
+                      <p className="mt-3 text-center text-[11px] font-medium text-zinc-400">
+                        Tap image to view full screen
+                      </p>
+                    </div>
                   </div>
                 </div>
-                <div className="max-w-md text-center sm:text-left">
-                  <p className="text-sm font-medium text-zinc-800">Path & preview card</p>
-                  <p className="mt-1 text-xs text-zinc-500">
-                    <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-700">/{selected.slug}</code>
-                    {siteBase ? (
-                      <>
-                        {" "}
-                        ·{" "}
-                        <a
-                          href={publicUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-medium text-emerald-700 underline decoration-emerald-600/30 underline-offset-2 hover:text-emerald-800"
-                        >
-                          Open live page
-                        </a>
-                      </>
-                    ) : null}
-                  </p>
-                  <p className="mt-3 text-xs text-zinc-500">
-                    Use <strong>Edit path & preview</strong> to change the URL path, dashboard-only bio, or the
-                    preview image.
-                  </p>
+
+                <div className="flex min-w-0 flex-col gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-zinc-800">Path & preview</p>
+                    <p className="mt-1 text-xs text-zinc-500">
+                      <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-700">/{selected.slug}</code>
+                      {siteBase ? (
+                        <>
+                          {" "}
+                          ·{" "}
+                          <a
+                            href={publicUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-medium text-emerald-700 underline decoration-emerald-600/30 underline-offset-2 hover:text-emerald-800"
+                          >
+                            Open live page
+                          </a>
+                        </>
+                      ) : null}
+                    </p>
+                    <p className="mt-2 text-xs text-zinc-500">
+                      Use <strong>Edit path & preview</strong> to change the URL path, dashboard-only bio, or the
+                      preview image.
+                    </p>
+                  </div>
+
+                  {stats && stats.countries.length > 0 && stats.totalClicks > 0 ? (
+                    <CountryChart
+                      items={stats.countries}
+                      totalClicks={stats.totalClicks}
+                      className="min-h-0 flex-1"
+                    />
+                  ) : (
+                    <div className="relative overflow-hidden rounded-2xl border border-dashed border-zinc-200/90 bg-zinc-50/60 p-6 text-center shadow-sm">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-400">
+                        Visitors by country
+                      </p>
+                      <p className="mt-2 text-sm text-zinc-500">
+                        Country breakdown appears once visitors start arriving from different regions.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
-
-              {stats && stats.countries.length > 0 && (
-                <CountryChart items={stats.countries} totalClicks={stats.totalClicks} />
-              )}
             </div>
 
             {pathPreviewEditorOpen ? (

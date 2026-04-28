@@ -7,6 +7,7 @@ type Item = { code: string; count: number };
 type Props = {
   items: Item[];
   totalClicks: number;
+  className?: string;
 };
 
 const BAR_GRADIENTS = [
@@ -17,13 +18,15 @@ const BAR_GRADIENTS = [
   "from-emerald-600 via-cyan-500 to-teal-600",
 ];
 
-export function CountryChart({ items, totalClicks }: Props) {
+export function CountryChart({ items, totalClicks, className = "" }: Props) {
   if (!items.length || totalClicks < 1) return null;
 
   const max = Math.max(...items.map((i) => i.count), 1);
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-zinc-200/90 bg-gradient-to-b from-white to-zinc-50/80 p-4 shadow-sm">
+    <div
+      className={`relative overflow-hidden rounded-2xl border border-zinc-200/90 bg-gradient-to-b from-white to-zinc-50/80 p-4 shadow-sm ${className}`}
+    >
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.35]"
         style={{
@@ -43,7 +46,7 @@ export function CountryChart({ items, totalClicks }: Props) {
         </span>
       </div>
 
-      <ul className="relative z-[1] max-h-44 space-y-3 overflow-y-auto pr-1 [scrollbar-width:thin] [scrollbar-color:rgba(161,161,170,0.9)_transparent]">
+      <ul className="relative z-[1] max-h-52 space-y-3 overflow-y-auto pr-1 [scrollbar-width:thin] [scrollbar-color:rgba(161,161,170,0.9)_transparent] sm:max-h-60">
         {items.map(({ code, count }, i) => {
           const pctOfTotal = Math.round((count / totalClicks) * 100);
           const barPct = Math.max((count / max) * 100, 4);
