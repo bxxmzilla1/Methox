@@ -5,10 +5,11 @@ import { LinkForm } from "@/components/LinkForm";
 import type { LinkRow } from "@/app/actions/links";
 import { APP_NAME } from "@/lib/constants";
 import { coerceLandingCards, coerceLandingHeroFocus, coerceSocialLinks } from "@/lib/landing-data";
+import { landingBioFromRow } from "@/lib/link-bio";
 
 export default async function EditLinkPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug: rawSlug } = await params;
-  const slug = decodeURIComponent(rawSlug);
+  const slug = decodeURIComponent(rawSlug).toLowerCase();
 
   const supabase = await createClient();
   const {
@@ -18,22 +19,22 @@ export default async function EditLinkPage({ params }: { params: Promise<{ slug:
 
   const { data: row } = await supabase
     .from("links")
-    .select(
-      "id, user_id, slug, username, bio, landing_bio, screenshot_path, hero_image_path, landing_hero_focus, destination_url, public_page_mode, display_name, handle, verified, follower_summary, social_links, landing_cards, created_at, updated_at"
-    )
+    .select("*")
     .eq("slug", slug)
     .eq("user_id", user.id)
     .single();
 
   if (!row) notFound();
 
+  const r = row as Record<string, unknown>;
+
   const link: LinkRow = {
-    id: row.id,
-    user_id: row.user_id,
-    slug: row.slug,
-    username: row.username ?? "",
-    bio: row.bio ?? "",
-    landing_bio: (row.landing_bio as string | null | undefined) ?? "",
+    id: row.id as string,
+    user_id: row.user_id as string,
+    slug: row.slug as string,
+    username: (row.username as string) ?? "",
+    bio: (row.bio as string) ?? "",
+    landing_bio: landingBioFromRow(r),
     screenshot_path: row.screenshot_path,
     hero_image_path: row.hero_image_path ?? null,
     landing_hero_focus: coerceLandingHeroFocus(row.landing_hero_focus),

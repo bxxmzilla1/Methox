@@ -7,6 +7,7 @@ import { PublicLanding } from "@/components/PublicLanding";
 import { RESERVED_SLUGS } from "@/lib/constants";
 import { coerceLandingCards, coerceLandingHeroFocus, slugToDisplayName } from "@/lib/landing-data";
 import { publicScreenshotUrl } from "@/lib/storage";
+import { landingBioFromRow } from "@/lib/link-bio";
 
 export const dynamic = "force-dynamic";
 
@@ -36,13 +37,7 @@ export default async function PublicLinkPage({ params }: PageProps) {
   if (RESERVED_SLUGS.has(slug)) notFound();
 
   const supabase = await createClient();
-  const { data: row } = await supabase
-    .from("links")
-    .select(
-      "id, slug, bio, landing_bio, screenshot_path, hero_image_path, landing_hero_focus, destination_url, public_page_mode, display_name, handle, landing_cards"
-    )
-    .eq("slug", slug)
-    .single();
+  const { data: row } = await supabase.from("links").select("*").eq("slug", slug).single();
 
   if (!row) notFound();
 
@@ -69,11 +64,7 @@ export default async function PublicLinkPage({ params }: PageProps) {
   const heroUrl = publicScreenshotUrl(heroPath);
   const heroFocus = coerceLandingHeroFocus(row.landing_hero_focus);
   const cards = coerceLandingCards(row.landing_cards);
-  const landingBioRaw = (row.landing_bio as string | null | undefined) ?? "";
-  const legacyBio = (row.bio as string | null | undefined) ?? "";
-  /** Prefer `landing_bio`; fall back to `bio` only when the column is absent (pre-migration). */
-  const publicBio =
-    row.landing_bio !== null && row.landing_bio !== undefined ? landingBioRaw : legacyBio;
+  const publicBio = landingBioFromRow(row as Record<string, unknown>);
 
   return (
     <>
