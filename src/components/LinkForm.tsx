@@ -320,6 +320,14 @@ export function LinkForm(props: Props) {
               placeholder="Lines, emojis, and short links welcome."
               className={`${inputClass} resize-y`}
             />
+            <p className="text-xs leading-relaxed text-zinc-500">
+              On your <strong className="font-medium text-zinc-600">live</strong> page, you can personalize text with{" "}
+              <code className="rounded bg-zinc-100 px-1 py-0.5 text-[11px] text-zinc-800">(country)</code> and{" "}
+              <code className="rounded bg-zinc-100 px-1 py-0.5 text-[11px] text-zinc-800">(city)</code> — each visitor
+              sees their own location (from IP). Example:{" "}
+              <span className="text-zinc-600">Hi from (city), (country)!</span> Requires IPinfo on the host; the editor
+              preview shows the placeholders as typed.
+            </p>
           </label>
 
           <div className="flex flex-col gap-2 rounded-2xl border border-zinc-200/90 bg-white p-4">
