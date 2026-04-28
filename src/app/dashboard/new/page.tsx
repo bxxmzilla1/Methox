@@ -24,7 +24,7 @@ export default async function NewLinkPage() {
       </p>
       <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-900">New link</h1>
       <p className="mt-2 text-sm text-zinc-600">
-        Set your username URL, bio, and optional screenshot.
+        Choose a landing page or a direct redirect, then add your bio, hero image, and link cards or destination URL.
       </p>
 
       <div className="mt-8 rounded-2xl border border-zinc-200/90 bg-white p-8 shadow-lg shadow-zinc-200/30">

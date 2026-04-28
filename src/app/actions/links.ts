@@ -3,6 +3,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { isValidSlug } from "@/lib/constants";
 import { revalidatePath } from "next/cache";
+import { parseLandingCardsJson, parseSocialLinksJson, type LandingCard, type SocialLink } from "@/lib/landing-data";
+import { normalizeHttpUrl } from "@/lib/urls";
 
 export type LinkRow = {
   id: string;
@@ -12,9 +14,34 @@ export type LinkRow = {
   bio: string;
   screenshot_path: string | null;
   destination_url: string | null;
+  public_page_mode: "landing" | "redirect";
+  display_name: string;
+  handle: string;
+  verified: boolean;
+  follower_summary: string;
+  social_links: SocialLink[];
+  landing_cards: LandingCard[];
   created_at: string;
   updated_at: string;
 };
+
+function readPageMode(formData: FormData): "landing" | "redirect" {
+  const v = String(formData.get("public_page_mode") ?? "landing").toLowerCase();
+  return v === "redirect" ? "redirect" : "landing";
+}
+
+function readLandingPayload(formData: FormData) {
+  const socialRaw = String(formData.get("social_links_json") ?? "[]");
+  const cardsRaw = String(formData.get("landing_cards_json") ?? "[]");
+  const social = parseSocialLinksJson(socialRaw);
+  if (!social.ok) return { error: social.error as string };
+  const cards = parseLandingCardsJson(cardsRaw);
+  if (!cards.ok) return { error: cards.error as string };
+  return {
+    social_links: social.data,
+    landing_cards: cards.data,
+  };
+}
 
 export async function createLink(formData: FormData) {
   const supabase = await createClient();
@@ -26,7 +53,24 @@ export async function createLink(formData: FormData) {
   const slug = String(formData.get("slug") ?? "").trim().toLowerCase();
   const bio = String(formData.get("bio") ?? "");
   const destinationRaw = String(formData.get("destination_url") ?? "").trim();
-  const destination_url = destinationRaw.length ? destinationRaw : null;
+  const destinationNorm = normalizeHttpUrl(destinationRaw);
+  const public_page_mode = readPageMode(formData);
+
+  if (public_page_mode === "redirect") {
+    if (!destinationNorm) {
+      return { error: "Redirect mode requires a valid http(s) destination URL." };
+    }
+  }
+
+  const destination_url = destinationNorm;
+
+  const display_name = String(formData.get("display_name") ?? "").trim().slice(0, 120);
+  const handle = String(formData.get("handle") ?? "").trim().slice(0, 120);
+  const verified = String(formData.get("verified") ?? "") === "on";
+  const follower_summary = String(formData.get("follower_summary") ?? "").trim().slice(0, 160);
+
+  const payload = readLandingPayload(formData);
+  if ("error" in payload) return { error: payload.error };
 
   if (!isValidSlug(slug)) {
     return { error: "Slug must be 2–64 chars: lowercase letters, numbers, single hyphens." };
@@ -40,6 +84,13 @@ export async function createLink(formData: FormData) {
       username: "",
       bio,
       destination_url,
+      public_page_mode,
+      display_name,
+      handle,
+      verified,
+      follower_summary,
+      social_links: payload.social_links,
+      landing_cards: payload.landing_cards,
     })
     .select("id, slug")
     .single();
@@ -67,13 +118,40 @@ export async function updateLink(
 
   const bio = String(formData.get("bio") ?? "");
   const destinationRaw = String(formData.get("destination_url") ?? "").trim();
-  const destination_url = destinationRaw.length ? destinationRaw : null;
+  const destinationNorm = normalizeHttpUrl(destinationRaw);
+  const public_page_mode = readPageMode(formData);
+
+  if (public_page_mode === "redirect") {
+    if (!destinationNorm) {
+      return { error: "Redirect mode requires a valid http(s) destination URL." };
+    }
+  }
+
+  const destination_url = destinationNorm;
 
   const patch: Record<string, unknown> = {
     bio,
     destination_url,
+    public_page_mode,
     updated_at: new Date().toISOString(),
   };
+
+  if (public_page_mode === "landing") {
+    const display_name = String(formData.get("display_name") ?? "").trim().slice(0, 120);
+    const handle = String(formData.get("handle") ?? "").trim().slice(0, 120);
+    const verified = String(formData.get("verified") ?? "") === "on";
+    const follower_summary = String(formData.get("follower_summary") ?? "").trim().slice(0, 160);
+
+    const payload = readLandingPayload(formData);
+    if ("error" in payload) return { error: payload.error };
+
+    patch.display_name = display_name;
+    patch.handle = handle;
+    patch.verified = verified;
+    patch.follower_summary = follower_summary;
+    patch.social_links = payload.social_links;
+    patch.landing_cards = payload.landing_cards;
+  }
 
   if (screenshotPath !== undefined) {
     patch.screenshot_path = screenshotPath;

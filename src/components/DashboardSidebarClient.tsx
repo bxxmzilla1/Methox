@@ -14,6 +14,7 @@ export type DashboardLinkRow = {
   slug: string;
   bio: string;
   screenshot_path: string | null;
+  public_page_mode?: string | null;
   created_at: string;
 };
 
@@ -86,7 +87,14 @@ export function DashboardSidebarClient({ links, statsByLinkId, siteBase }: Props
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold text-zinc-900">/{link.slug}</p>
+                  <p className="flex flex-wrap items-center gap-2 truncate font-semibold text-zinc-900">
+                    <span className="truncate">/{link.slug}</span>
+                    {link.public_page_mode === "redirect" ? (
+                      <span className="shrink-0 rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800 ring-1 ring-amber-200/80">
+                        Redirect
+                      </span>
+                    ) : null}
+                  </p>
                   <p className="text-xs text-zinc-500">
                     {s ? (
                       <>

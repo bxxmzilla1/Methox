@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { LinkForm } from "@/components/LinkForm";
 import type { LinkRow } from "@/app/actions/links";
 import { APP_NAME } from "@/lib/constants";
+import { coerceLandingCards, coerceSocialLinks } from "@/lib/landing-data";
 
 export default async function EditLinkPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug: rawSlug } = await params;
@@ -17,14 +18,33 @@ export default async function EditLinkPage({ params }: { params: Promise<{ slug:
 
   const { data: row } = await supabase
     .from("links")
-    .select("id, user_id, slug, username, bio, screenshot_path, destination_url, created_at, updated_at")
+    .select(
+      "id, user_id, slug, username, bio, screenshot_path, destination_url, public_page_mode, display_name, handle, verified, follower_summary, social_links, landing_cards, created_at, updated_at"
+    )
     .eq("slug", slug)
     .eq("user_id", user.id)
     .single();
 
   if (!row) notFound();
 
-  const link = row as LinkRow;
+  const link: LinkRow = {
+    id: row.id,
+    user_id: row.user_id,
+    slug: row.slug,
+    username: row.username ?? "",
+    bio: row.bio ?? "",
+    screenshot_path: row.screenshot_path,
+    destination_url: row.destination_url,
+    public_page_mode: row.public_page_mode === "redirect" ? "redirect" : "landing",
+    display_name: row.display_name ?? "",
+    handle: row.handle ?? "",
+    verified: Boolean(row.verified),
+    follower_summary: row.follower_summary ?? "",
+    social_links: coerceSocialLinks(row.social_links),
+    landing_cards: coerceLandingCards(row.landing_cards),
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
 
   return (
     <div className="mx-auto min-h-full max-w-2xl px-6 py-10">
