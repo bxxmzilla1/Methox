@@ -1,4 +1,5 @@
 export const PLATFORM_OPTIONS = [
+  { id: "none", label: "No icon (center label)" },
   { id: "instagram", label: "Instagram" },
   { id: "tiktok", label: "TikTok" },
   { id: "twitter", label: "X (Twitter)" },
@@ -20,6 +21,8 @@ export function platformLabel(id: string): string {
 /** Tailwind gradient classes for card backgrounds when no image */
 export function cardGradientClass(platform: string): string {
   switch (platform) {
+    case "none":
+      return "bg-gradient-to-br from-zinc-700 to-zinc-900";
     case "instagram":
       return "bg-gradient-to-br from-fuchsia-600 via-purple-600 to-orange-400";
     case "tiktok":

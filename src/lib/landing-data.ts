@@ -29,6 +29,8 @@ export type LandingCard = {
   platform: string;
   featured?: boolean;
   locked?: boolean;
+  /** Hide the platform icon button (unlocked cards only). */
+  hide_platform_icon?: boolean;
   /** Pulsing glow on the lock icon (public landing only). */
   locked_glow?: boolean;
   /** Show unlock hint under the card label when locked. */
@@ -100,6 +102,7 @@ export function parseLandingCardsJson(raw: string): { ok: true; data: LandingCar
     const platform = String(rec.platform ?? "other").slice(0, 64);
     const featured = Boolean(rec.featured);
     const locked = Boolean(rec.locked);
+    const hide_platform_icon = Boolean(rec.hide_platform_icon) || platform === "none";
     const locked_glow = Boolean(rec.locked_glow);
     const locked_hint = Boolean(rec.locked_hint);
     let locked_hint_text: string | undefined = undefined;
@@ -130,6 +133,7 @@ export function parseLandingCardsJson(raw: string): { ok: true; data: LandingCar
       platform,
       featured,
       locked,
+      hide_platform_icon,
       locked_glow,
       locked_hint,
       locked_hint_text,

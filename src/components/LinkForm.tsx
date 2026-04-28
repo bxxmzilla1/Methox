@@ -181,6 +181,7 @@ export function LinkForm(props: Props) {
         platform: "instagram",
         featured: false,
         locked: false,
+        hide_platform_icon: false,
         locked_glow: false,
         locked_hint: false,
         image_path: null,
@@ -361,7 +362,12 @@ export function LinkForm(props: Props) {
                       Platform / icon
                       <select
                         value={row.platform}
-                        onChange={(e) => updateCard(i, { platform: e.target.value })}
+                        onChange={(e) =>
+                          updateCard(i, {
+                            platform: e.target.value,
+                            hide_platform_icon: e.target.value === "none",
+                          })
+                        }
                         className={inputClass + " py-2 text-sm"}
                       >
                         {PLATFORM_OPTIONS.map((p) => (

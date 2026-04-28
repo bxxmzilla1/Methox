@@ -272,6 +272,7 @@ function LandingCardLink({
   const grad = cardGradientClass(card.platform);
   const bgUrl = cardBackgroundUrl(card);
   const cardPos = focusToObjectPosition(card.image_focus ?? DEFAULT_IMAGE_FOCUS);
+  const showRightIcon = card.locked ? true : !(card.hide_platform_icon || card.platform === "none");
   return (
     <a
       href={isPreview ? "#preview" : card.url}
@@ -295,12 +296,12 @@ function LandingCardLink({
       <div
         className={
           isPreview
-            ? "absolute inset-y-0 left-3.5 right-[3.75rem] flex flex-col justify-center py-1"
-            : "absolute inset-y-0 left-3.5 right-[3.75rem] flex flex-col justify-center py-1 sm:left-4 sm:right-[4.25rem]"
+            ? `absolute inset-y-0 ${showRightIcon ? "left-3.5 right-[3.75rem]" : "inset-x-3.5"} flex flex-col justify-center py-1`
+            : `absolute inset-y-0 ${showRightIcon ? "left-3.5 right-[3.75rem] sm:left-4 sm:right-[4.25rem]" : "inset-x-3.5 sm:inset-x-4"} flex flex-col justify-center py-1`
         }
       >
         <span
-          className={`line-clamp-2 text-left font-bold tracking-tight ${isPreview ? "text-base" : "text-base sm:text-lg"}`}
+          className={`line-clamp-2 font-bold tracking-tight ${showRightIcon ? "text-left" : "text-center"} ${isPreview ? "text-base" : "text-base sm:text-lg"}`}
         >
           {card.label}
         </span>
@@ -314,28 +315,30 @@ function LandingCardLink({
           </span>
         </div>
       ) : null}
-      <div
-        className={
-          isPreview
-            ? `absolute right-2.5 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 ring-1 ring-white/20 ${card.locked && card.locked_glow ? "animate-lock-glow ring-emerald-300/50" : ""}`
-            : `absolute right-2.5 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 ring-1 ring-white/20 sm:right-3 sm:h-12 sm:w-12 ${card.locked && card.locked_glow ? "animate-lock-glow ring-emerald-300/50" : ""}`
-        }
-      >
-        {card.locked ? (
-          <svg
-            className={`h-5 w-5 text-white sm:h-6 sm:w-6 ${card.locked_glow ? "animate-lock-icon-pulse" : ""}`}
-            viewBox="0 0 24 24"
-            aria-hidden
-          >
-            <path
-              fill="currentColor"
-              d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm-3 8V7a3 3 0 1 1 6 0v3H9z"
-            />
-          </svg>
-        ) : (
-          <PlatformGlyph platform={card.platform} />
-        )}
-      </div>
+      {showRightIcon ? (
+        <div
+          className={
+            isPreview
+              ? `absolute right-2.5 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 ring-1 ring-white/20 ${card.locked && card.locked_glow ? "animate-lock-glow ring-emerald-300/50" : ""}`
+              : `absolute right-2.5 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 ring-1 ring-white/20 sm:right-3 sm:h-12 sm:w-12 ${card.locked && card.locked_glow ? "animate-lock-glow ring-emerald-300/50" : ""}`
+          }
+        >
+          {card.locked ? (
+            <svg
+              className={`h-5 w-5 text-white sm:h-6 sm:w-6 ${card.locked_glow ? "animate-lock-icon-pulse" : ""}`}
+              viewBox="0 0 24 24"
+              aria-hidden
+            >
+              <path
+                fill="currentColor"
+                d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm-3 8V7a3 3 0 1 1 6 0v3H9z"
+              />
+            </svg>
+          ) : (
+            <PlatformGlyph platform={card.platform} />
+          )}
+        </div>
+      ) : null}
     </a>
   );
 }
