@@ -7,7 +7,12 @@ export type LandingCard = {
   platform: string;
   featured?: boolean;
   locked?: boolean;
+  /** Storage object path in screenshots bucket (userId/linkId/cards/...) */
+  image_path?: string | null;
+  /** Legacy external image URL */
   image_url?: string | null;
+  /** Editor / preview only — not persisted */
+  previewBgUrl?: string | null;
 };
 
 const MAX_SOCIAL = 12;
@@ -65,7 +70,22 @@ export function parseLandingCardsJson(raw: string): { ok: true; data: LandingCar
       const imgNorm = normalizeHttpUrl(img) ?? (img.startsWith("https://") || img.startsWith("http://") ? img : null);
       image_url = imgNorm;
     }
-    out.push({ label, url: urlNorm, platform, featured, locked, image_url: image_url ?? null });
+    let image_path: string | null | undefined = undefined;
+    if (rec.image_path != null && String(rec.image_path).trim()) {
+      const p = String(rec.image_path).trim().slice(0, 512);
+      if (!p.includes("..") && /^[a-zA-Z0-9_.\-/]+$/.test(p)) {
+        image_path = p;
+      }
+    }
+    out.push({
+      label,
+      url: urlNorm,
+      platform,
+      featured,
+      locked,
+      image_url: image_url ?? null,
+      image_path: image_path ?? null,
+    });
   }
   return { ok: true, data: out };
 }

@@ -47,3 +47,34 @@ export async function uploadHeroScreenshot(
   }
   return { ok: true, path };
 }
+
+/** Link card background in screenshots bucket: userId/linkId/cards/{index}.ext */
+export async function uploadLinkCardImage(
+  supabase: SupabaseClient,
+  userId: string,
+  linkId: string,
+  cardIndex: number,
+  file: File
+): Promise<{ ok: true; path: string } | { ok: false; message: string }> {
+  if (file.size === 0) return { ok: false, message: "Choose a non-empty image file." };
+  if (file.size > 15 * 1024 * 1024) {
+    return { ok: false, message: "Card image must be 15MB or smaller." };
+  }
+
+  const { ext, contentType } = imageExtAndType(file.name, file.type);
+  const path = `${userId}/${linkId}/cards/${cardIndex}.${ext}`;
+  const body = new Uint8Array(await file.arrayBuffer());
+
+  const { error } = await supabase.storage.from("screenshots").upload(path, body, {
+    upsert: true,
+    contentType,
+  });
+
+  if (error) {
+    return {
+      ok: false,
+      message: [error.message, (error as { statusCode?: string }).statusCode].filter(Boolean).join(" — "),
+    };
+  }
+  return { ok: true, path };
+}

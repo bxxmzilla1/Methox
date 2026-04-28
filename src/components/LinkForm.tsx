@@ -8,6 +8,26 @@ import { useEffect, useMemo, useState } from "react";
 import type { LandingCard } from "@/lib/landing-data";
 import { PLATFORM_OPTIONS } from "@/lib/platforms";
 
+function reindexFiles(prev: Record<number, File>, removed: number): Record<number, File> {
+  const next: Record<number, File> = {};
+  Object.entries(prev).forEach(([k, v]) => {
+    const idx = Number(k);
+    if (idx === removed) return;
+    next[idx > removed ? idx - 1 : idx] = v;
+  });
+  return next;
+}
+
+function reindexClear(prev: Record<number, boolean>, removed: number): Record<number, boolean> {
+  const next: Record<number, boolean> = {};
+  Object.entries(prev).forEach(([k, v]) => {
+    const idx = Number(k);
+    if (idx === removed || !v) return;
+    next[idx > removed ? idx - 1 : idx] = true;
+  });
+  return next;
+}
+
 type Props =
   | { mode: "create" }
   | { mode: "edit"; link: LinkRow };
@@ -35,6 +55,9 @@ export function LinkForm(props: Props) {
   const [bioLanding, setBioLanding] = useState(() => link?.bio ?? "");
   const [verified, setVerified] = useState(() => link?.verified ?? false);
   const [heroObjectUrl, setHeroObjectUrl] = useState<string | null>(null);
+  const [cardFiles, setCardFiles] = useState<Record<number, File>>({});
+  const [cardClearImage, setCardClearImage] = useState<Record<number, boolean>>({});
+  const [cardPreviewBlobs, setCardPreviewBlobs] = useState<Record<number, string>>({});
 
   const defaults = useMemo(
     () => ({
@@ -63,6 +86,26 @@ export function LinkForm(props: Props) {
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
+  useEffect(() => {
+    const urls: Record<number, string> = {};
+    Object.entries(cardFiles).forEach(([k, f]) => {
+      urls[Number(k)] = URL.createObjectURL(f);
+    });
+    setCardPreviewBlobs(urls);
+    return () => {
+      Object.values(urls).forEach((u) => URL.revokeObjectURL(u));
+    };
+  }, [cardFiles]);
+
+  const previewCards = useMemo(
+    () =>
+      landingCards.map((c, i) => ({
+        ...c,
+        previewBgUrl: cardPreviewBlobs[i] ?? undefined,
+      })),
+    [landingCards, cardPreviewBlobs]
+  );
+
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
@@ -73,6 +116,9 @@ export function LinkForm(props: Props) {
     try {
       if (props.mode === "create") {
         if (file) fd.append("screenshot", file, file.name);
+        Object.entries(cardFiles).forEach(([k, f]) => {
+          fd.append(`card_image_${k}`, f, f.name);
+        });
         const res = await createLink(fd);
         if (res.error) {
           setError(res.error);
@@ -87,6 +133,9 @@ export function LinkForm(props: Props) {
       if (!link) return;
 
       if (file) fd.append("screenshot", file, file.name);
+      Object.entries(cardFiles).forEach(([k, f]) => {
+        fd.append(`card_image_${k}`, f, f.name);
+      });
       const res = await updateLink(link.id, link.slug, fd);
       if (res.error) {
         setError(res.error);
@@ -103,7 +152,15 @@ export function LinkForm(props: Props) {
   function addCard() {
     setLandingCards((c) => [
       ...c,
-      { label: "", url: "", platform: "instagram", featured: false, locked: false, image_url: "" },
+      {
+        label: "",
+        url: "",
+        platform: "instagram",
+        featured: false,
+        locked: false,
+        image_path: null,
+        image_url: null,
+      },
     ]);
   }
 
@@ -113,6 +170,8 @@ export function LinkForm(props: Props) {
 
   function removeCard(i: number) {
     setLandingCards((c) => c.filter((_, j) => j !== i));
+    setCardFiles((p) => reindexFiles(p, i));
+    setCardClearImage((p) => reindexClear(p, i));
   }
 
   return (
@@ -256,8 +315,8 @@ export function LinkForm(props: Props) {
               </button>
             </div>
             <p className="text-xs text-zinc-500">
-              Full-width link bars. Mark one as <strong>featured</strong> to pin it at the top. Optional image URL for
-              background art.
+              Full-width link bars. Mark one as <strong>featured</strong> to pin it at the top. Optionally upload a
+              background image per card.
             </p>
             {landingCards.length === 0 && (
               <p className="text-xs text-zinc-400">Add at least one card with label and URL.</p>
@@ -265,6 +324,9 @@ export function LinkForm(props: Props) {
             <ul className="flex flex-col gap-3">
               {landingCards.map((row, i) => (
                 <li key={i} className="flex flex-col gap-2 rounded-xl border border-zinc-100 bg-zinc-50/80 p-3">
+                  {cardClearImage[i] ? (
+                    <input type="hidden" name={`card_clear_image_${i}`} value="1" />
+                  ) : null}
                   <div className="flex flex-wrap gap-2">
                     <label className="flex min-w-[8rem] flex-1 flex-col gap-1 text-xs font-medium text-zinc-600">
                       Platform / icon
@@ -299,15 +361,46 @@ export function LinkForm(props: Props) {
                       className={inputClass}
                     />
                   </label>
-                  <label className="flex flex-col gap-1 text-xs font-medium text-zinc-600">
-                    Image URL (optional)
+                  <div className="flex flex-col gap-1 text-xs font-medium text-zinc-600">
+                    <span>Card image (optional)</span>
                     <input
-                      value={row.image_url ?? ""}
-                      onChange={(e) => updateCard(i, { image_url: e.target.value || null })}
-                      placeholder="https://… for card background"
-                      className={inputClass}
+                      type="file"
+                      accept="image/*"
+                      className="text-sm text-zinc-600 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-zinc-200 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-zinc-800 hover:file:bg-zinc-300"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0] ?? null;
+                        if (f) {
+                          setCardFiles((p) => ({ ...p, [i]: f }));
+                          setCardClearImage((p) => {
+                            const n = { ...p };
+                            delete n[i];
+                            return n;
+                          });
+                          updateCard(i, { image_path: null, image_url: null });
+                        }
+                      }}
                     />
-                  </label>
+                    {(row.image_path || row.image_url || cardFiles[i]) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCardFiles((p) => {
+                            const n = { ...p };
+                            delete n[i];
+                            return n;
+                          });
+                          setCardClearImage((p) => ({ ...p, [i]: true }));
+                          updateCard(i, { image_path: null, image_url: null });
+                        }}
+                        className="w-fit text-xs font-medium text-red-600 hover:underline"
+                      >
+                        Remove image
+                      </button>
+                    )}
+                    {row.image_path && !cardFiles[i] && !cardClearImage[i] && (
+                      <span className="text-[11px] text-zinc-500">Using saved upload. Choose a file to replace.</span>
+                    )}
+                  </div>
                   <div className="flex flex-wrap items-center gap-4 text-xs text-zinc-700">
                     <label className="flex items-center gap-2">
                       <input
@@ -390,7 +483,7 @@ export function LinkForm(props: Props) {
           verified={verified}
           bio={bioLanding}
           heroUrl={previewHeroUrl}
-          cards={landingCards}
+          cards={previewCards}
         />
       ) : (
         <aside className="flex flex-col gap-3 rounded-2xl border border-dashed border-zinc-200 bg-zinc-50/60 p-6 text-sm text-zinc-600 lg:sticky lg:top-6">

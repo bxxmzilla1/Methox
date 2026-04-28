@@ -3,8 +3,14 @@
 import { createClient } from "@/lib/supabase/server";
 import { isValidSlug } from "@/lib/constants";
 import { revalidatePath } from "next/cache";
-import { parseLandingCardsJson, parseSocialLinksJson, type LandingCard, type SocialLink } from "@/lib/landing-data";
-import { uploadHeroScreenshot } from "@/lib/storage-upload";
+import {
+  coerceLandingCards,
+  parseLandingCardsJson,
+  parseSocialLinksJson,
+  type LandingCard,
+  type SocialLink,
+} from "@/lib/landing-data";
+import { uploadHeroScreenshot, uploadLinkCardImage } from "@/lib/storage-upload";
 import { normalizeHttpUrl } from "@/lib/urls";
 
 export type LinkRow = {
@@ -44,6 +50,96 @@ function readLandingPayload(formData: FormData) {
   };
 }
 
+function cardImagePrefix(userId: string, linkId: string) {
+  return `${userId}/${linkId}/cards/`;
+}
+
+function safeCardImagePath(userId: string, linkId: string, p: string | null | undefined): string | null {
+  if (!p || !String(p).trim()) return null;
+  const prefix = cardImagePrefix(userId, linkId);
+  const s = String(p).trim();
+  if (s.includes("..") || !s.startsWith(prefix)) return null;
+  return s.slice(0, 512);
+}
+
+function stripCardForInsert(c: LandingCard): LandingCard {
+  return {
+    label: c.label,
+    url: c.url,
+    platform: c.platform,
+    featured: c.featured,
+    locked: c.locked,
+    image_path: null,
+    image_url: null,
+  };
+}
+
+async function applyLandingCardImages(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  linkId: string,
+  formData: FormData,
+  cards: LandingCard[],
+  previousCards: LandingCard[] | null
+): Promise<{ ok: true; cards: LandingCard[] } | { ok: false; message: string }> {
+  const prev = previousCards ?? [];
+  const next: LandingCard[] = cards.map((c) => ({
+    ...c,
+    image_path: safeCardImagePath(userId, linkId, c.image_path ?? null),
+    image_url: c.image_url ?? null,
+  }));
+
+  for (let i = 0; i < next.length; i++) {
+    if (formData.get(`card_clear_image_${i}`) === "1") {
+      const old =
+        next[i].image_path ?? safeCardImagePath(userId, linkId, prev[i]?.image_path ?? null);
+      if (old) {
+        await supabase.storage.from("screenshots").remove([old]).catch(() => undefined);
+      }
+      next[i] = { ...next[i], image_path: null, image_url: null };
+      continue;
+    }
+    const file = formData.get(`card_image_${i}`);
+    if (file instanceof File && file.size > 0) {
+      const old =
+        next[i].image_path ?? safeCardImagePath(userId, linkId, prev[i]?.image_path ?? null);
+      const up = await uploadLinkCardImage(supabase, userId, linkId, i, file);
+      if (!up.ok) return { ok: false, message: `Card ${i + 1} image: ${up.message}` };
+      if (old && old !== up.path) {
+        await supabase.storage.from("screenshots").remove([old]).catch(() => undefined);
+      }
+      next[i] = { ...next[i], image_path: up.path, image_url: null };
+    }
+  }
+
+  for (let i = 0; i < next.length; i++) {
+    if (formData.get(`card_clear_image_${i}`) === "1") continue;
+    if (next[i].image_path) continue;
+    const keep = safeCardImagePath(userId, linkId, prev[i]?.image_path ?? null);
+    if (keep) {
+      next[i] = {
+        ...next[i],
+        image_path: keep,
+        image_url: next[i].image_url ?? prev[i]?.image_url ?? null,
+      };
+    }
+  }
+
+  return { ok: true, cards: next };
+}
+
+async function rollbackNewLink(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  linkId: string,
+  screenshotPath: string | null
+) {
+  if (screenshotPath) {
+    await supabase.storage.from("screenshots").remove([screenshotPath]).catch(() => undefined);
+  }
+  await supabase.from("links").delete().eq("id", linkId).eq("user_id", userId);
+}
+
 export async function createLink(formData: FormData) {
   const supabase = await createClient();
   const {
@@ -77,6 +173,11 @@ export async function createLink(formData: FormData) {
     return { error: "Slug must be 2–64 chars: lowercase letters, numbers, single hyphens." };
   }
 
+  const cardsForInsert =
+    public_page_mode === "landing"
+      ? payload.landing_cards.map(stripCardForInsert)
+      : payload.landing_cards;
+
   const { data, error } = await supabase
     .from("links")
     .insert({
@@ -91,7 +192,7 @@ export async function createLink(formData: FormData) {
       verified,
       follower_summary,
       social_links: payload.social_links,
-      landing_cards: payload.landing_cards,
+      landing_cards: cardsForInsert,
     })
     .select("id, slug")
     .single();
@@ -101,22 +202,47 @@ export async function createLink(formData: FormData) {
     return { error: error.message };
   }
 
+  let heroPath: string | null = null;
   const shot = formData.get("screenshot");
   if (shot instanceof File && shot.size > 0) {
     const up = await uploadHeroScreenshot(supabase, user.id, data.id, shot);
     if (!up.ok) {
-      await supabase.from("links").delete().eq("id", data.id).eq("user_id", user.id);
+      await rollbackNewLink(supabase, user.id, data.id, null);
       return { error: `Screenshot upload failed: ${up.message}` };
     }
+    heroPath = up.path;
     const { error: pathErr } = await supabase
       .from("links")
       .update({ screenshot_path: up.path, updated_at: new Date().toISOString() })
       .eq("id", data.id)
       .eq("user_id", user.id);
     if (pathErr) {
-      await supabase.storage.from("screenshots").remove([up.path]).catch(() => undefined);
-      await supabase.from("links").delete().eq("id", data.id).eq("user_id", user.id);
+      await rollbackNewLink(supabase, user.id, data.id, up.path);
       return { error: pathErr.message };
+    }
+  }
+
+  if (public_page_mode === "landing" && payload.landing_cards.length > 0) {
+    const applied = await applyLandingCardImages(
+      supabase,
+      user.id,
+      data.id,
+      formData,
+      cardsForInsert,
+      null
+    );
+    if (!applied.ok) {
+      await rollbackNewLink(supabase, user.id, data.id, heroPath);
+      return { error: applied.message };
+    }
+    const { error: cardErr } = await supabase
+      .from("links")
+      .update({ landing_cards: applied.cards, updated_at: new Date().toISOString() })
+      .eq("id", data.id)
+      .eq("user_id", user.id);
+    if (cardErr) {
+      await rollbackNewLink(supabase, user.id, data.id, heroPath);
+      return { error: cardErr.message };
     }
   }
 
@@ -160,12 +286,30 @@ export async function updateLink(linkId: string, slug: string, formData: FormDat
     const payload = readLandingPayload(formData);
     if ("error" in payload) return { error: payload.error };
 
+    const { data: existingRow } = await supabase
+      .from("links")
+      .select("landing_cards")
+      .eq("id", linkId)
+      .eq("user_id", user.id)
+      .single();
+
+    const prevCards = coerceLandingCards(existingRow?.landing_cards);
+    const applied = await applyLandingCardImages(
+      supabase,
+      user.id,
+      linkId,
+      formData,
+      payload.landing_cards,
+      prevCards
+    );
+    if (!applied.ok) return { error: applied.message };
+
     patch.display_name = display_name;
     patch.handle = handle;
     patch.verified = verified;
     patch.follower_summary = follower_summary;
     patch.social_links = payload.social_links;
-    patch.landing_cards = payload.landing_cards;
+    patch.landing_cards = applied.cards;
   }
 
   const shot = formData.get("screenshot");
@@ -204,13 +348,20 @@ export async function deleteLink(linkId: string) {
 
   const { data: link } = await supabase
     .from("links")
-    .select("screenshot_path")
+    .select("screenshot_path, landing_cards")
     .eq("id", linkId)
     .eq("user_id", user.id)
     .single();
 
   if (link?.screenshot_path) {
     await supabase.storage.from("screenshots").remove([link.screenshot_path]);
+  }
+
+  const cards = coerceLandingCards(link?.landing_cards);
+  for (const c of cards) {
+    if (c.image_path) {
+      await supabase.storage.from("screenshots").remove([c.image_path]).catch(() => undefined);
+    }
   }
 
   const { error } = await supabase.from("links").delete().eq("id", linkId).eq("user_id", user.id);

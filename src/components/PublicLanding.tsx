@@ -3,6 +3,7 @@
 import type { LandingCard } from "@/lib/landing-data";
 import { slugToDisplayName } from "@/lib/landing-data";
 import { cardGradientClass, type PlatformId } from "@/lib/platforms";
+import { publicScreenshotUrl } from "@/lib/storage";
 
 function formatHandle(raw: string): string | null {
   const t = raw.trim();
@@ -92,6 +93,13 @@ function PlatformGlyph({ platform }: { platform: string }) {
         </svg>
       );
   }
+}
+
+function cardBackgroundUrl(card: LandingCard): string | null {
+  if (card.previewBgUrl) return card.previewBgUrl;
+  if (card.image_path) return publicScreenshotUrl(card.image_path);
+  if (card.image_url) return card.image_url;
+  return null;
 }
 
 export type PublicLandingProps = {
@@ -207,6 +215,7 @@ function LandingCardLink({
   isPreview?: boolean;
 }) {
   const grad = cardGradientClass(card.platform);
+  const bgUrl = cardBackgroundUrl(card);
   return (
     <a
       href={isPreview ? "#preview" : card.url}
@@ -215,14 +224,19 @@ function LandingCardLink({
       onClick={isPreview ? (e) => e.preventDefault() : undefined}
       className={`group relative block overflow-hidden rounded-2xl ring-1 ring-white/10 ${className}`}
     >
-      {card.image_url ? (
+      {bgUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={card.image_url} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <img src={bgUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
       ) : (
         <div className={`absolute inset-0 ${grad}`} />
       )}
-      <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/35 to-black/55" />
-      <div className="absolute left-2.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 ring-1 ring-white/20 sm:left-3 sm:h-10 sm:w-10">
+      <div className="absolute inset-0 bg-gradient-to-l from-black/65 via-black/35 to-black/80" />
+      <div className="absolute inset-y-0 left-3 right-[3.25rem] flex items-center sm:left-4 sm:right-16">
+        <span className="line-clamp-2 text-left text-sm font-bold tracking-tight sm:text-base">
+          {card.label}
+        </span>
+      </div>
+      <div className="absolute right-2.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 ring-1 ring-white/20 sm:right-3 sm:h-10 sm:w-10">
         {card.locked ? (
           <svg className="h-4 w-4 text-white sm:h-5 sm:w-5" viewBox="0 0 24 24" aria-hidden>
             <path
@@ -233,9 +247,6 @@ function LandingCardLink({
         ) : (
           <PlatformGlyph platform={card.platform} />
         )}
-      </div>
-      <div className="absolute inset-y-0 left-[3.25rem] right-3 flex items-center justify-center sm:left-14 sm:right-4">
-        <span className="text-center text-sm font-bold tracking-tight sm:text-base">{card.label}</span>
       </div>
     </a>
   );
