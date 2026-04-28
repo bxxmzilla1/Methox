@@ -1,8 +1,8 @@
 "use client";
 
-import type { LandingCard, SocialLink } from "@/lib/landing-data";
+import type { LandingCard } from "@/lib/landing-data";
 import { slugToDisplayName } from "@/lib/landing-data";
-import { cardGradientClass, platformLabel, type PlatformId } from "@/lib/platforms";
+import { cardGradientClass, type PlatformId } from "@/lib/platforms";
 
 function formatHandle(raw: string): string | null {
   const t = raw.trim();
@@ -99,10 +99,8 @@ export type PublicLandingProps = {
   displayName: string;
   handle: string;
   verified: boolean;
-  followerSummary: string;
   bio: string;
   heroUrl: string | null;
-  socialLinks: SocialLink[];
   cards: LandingCard[];
   /** Shorter layout for dashboard live preview */
   embedded?: boolean;
@@ -115,10 +113,8 @@ export function PublicLanding({
   displayName,
   handle,
   verified,
-  followerSummary,
   bio,
   heroUrl,
-  socialLinks,
   cards,
   embedded = false,
   isPreview = false,
@@ -169,28 +165,6 @@ export function PublicLanding({
             )}
           </h1>
           {handleText && <p className="mt-1 text-sm text-zinc-400">{handleText}</p>}
-
-          {socialLinks.length > 0 && (
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-              {socialLinks.map((s, i) => (
-                <a
-                  key={`${s.platform}-${i}`}
-                  href={isPreview ? "#preview" : s.url}
-                  target={isPreview ? undefined : "_blank"}
-                  rel={isPreview ? undefined : "noopener noreferrer"}
-                  onClick={isPreview ? (e) => e.preventDefault() : undefined}
-                  className="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-800/90 ring-1 ring-white/10 transition hover:bg-zinc-700"
-                  aria-label={platformLabel(s.platform)}
-                >
-                  <PlatformGlyph platform={s.platform} />
-                </a>
-              ))}
-            </div>
-          )}
-
-          {followerSummary.trim() && (
-            <p className="mt-5 text-sm font-medium text-zinc-300">{followerSummary.trim()}</p>
-          )}
 
           {bio.trim() && (
             <p className="mt-5 max-w-prose whitespace-pre-wrap text-sm leading-relaxed text-zinc-200">

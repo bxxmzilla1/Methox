@@ -1,17 +1,15 @@
 "use client";
 
 import { PublicLanding } from "@/components/PublicLanding";
-import type { LandingCard, SocialLink } from "@/lib/landing-data";
+import type { LandingCard } from "@/lib/landing-data";
 
 type Props = {
   slug: string;
   displayName: string;
   handle: string;
   verified: boolean;
-  followerSummary: string;
   bio: string;
   heroUrl: string | null;
-  socialLinks: SocialLink[];
   cards: LandingCard[];
 };
 
@@ -20,14 +18,10 @@ export function LandingLivePreview({
   displayName,
   handle,
   verified,
-  followerSummary,
   bio,
   heroUrl,
-  socialLinks,
   cards,
 }: Props) {
-  const socialForPreview = socialLinks.filter((s) => s.url.trim().length > 0);
-
   return (
     <aside className="flex flex-col gap-3 lg:sticky lg:top-6">
       <div className="flex items-center justify-between gap-2">
@@ -43,10 +37,8 @@ export function LandingLivePreview({
             displayName={displayName}
             handle={handle}
             verified={verified}
-            followerSummary={followerSummary}
             bio={bio}
             heroUrl={heroUrl}
-            socialLinks={socialForPreview}
             cards={cards}
             embedded
             isPreview

@@ -5,7 +5,7 @@ import { VisitorTracker } from "@/components/VisitorTracker";
 import { RedirectAfterTrack } from "@/components/RedirectAfterTrack";
 import { PublicLanding } from "@/components/PublicLanding";
 import { RESERVED_SLUGS } from "@/lib/constants";
-import { coerceLandingCards, coerceSocialLinks, slugToDisplayName } from "@/lib/landing-data";
+import { coerceLandingCards, slugToDisplayName } from "@/lib/landing-data";
 import { publicScreenshotUrl } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +39,7 @@ export default async function PublicLinkPage({ params }: PageProps) {
   const { data: row } = await supabase
     .from("links")
     .select(
-      "id, slug, bio, screenshot_path, destination_url, public_page_mode, display_name, handle, verified, follower_summary, social_links, landing_cards"
+      "id, slug, bio, screenshot_path, destination_url, public_page_mode, display_name, handle, verified, landing_cards"
     )
     .eq("slug", slug)
     .single();
@@ -65,7 +65,6 @@ export default async function PublicLinkPage({ params }: PageProps) {
   }
 
   const heroUrl = publicScreenshotUrl((row.screenshot_path as string | null) ?? null);
-  const socialLinks = coerceSocialLinks(row.social_links);
   const cards = coerceLandingCards(row.landing_cards);
 
   return (
@@ -76,10 +75,8 @@ export default async function PublicLinkPage({ params }: PageProps) {
         displayName={(row.display_name as string) ?? ""}
         handle={(row.handle as string) ?? ""}
         verified={Boolean(row.verified)}
-        followerSummary={(row.follower_summary as string) ?? ""}
         bio={(row.bio as string) ?? ""}
         heroUrl={heroUrl}
-        socialLinks={socialLinks}
         cards={cards}
       />
     </>

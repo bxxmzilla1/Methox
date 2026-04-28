@@ -5,7 +5,7 @@ import { LandingLivePreview } from "@/components/LandingLivePreview";
 import { publicScreenshotUrl } from "@/lib/storage";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import type { LandingCard, SocialLink } from "@/lib/landing-data";
+import type { LandingCard } from "@/lib/landing-data";
 import { PLATFORM_OPTIONS } from "@/lib/platforms";
 
 type Props =
@@ -27,13 +27,11 @@ export function LinkForm(props: Props) {
   const [pageMode, setPageMode] = useState<"landing" | "redirect">(
     () => link?.public_page_mode ?? "landing"
   );
-  const [socialLinks, setSocialLinks] = useState<SocialLink[]>(() => link?.social_links ?? []);
   const [landingCards, setLandingCards] = useState<LandingCard[]>(() => link?.landing_cards ?? []);
 
   const [slugDraft, setSlugDraft] = useState("");
   const [displayName, setDisplayName] = useState(() => link?.display_name ?? "");
   const [handle, setHandle] = useState(() => link?.handle ?? "");
-  const [followerSummary, setFollowerSummary] = useState(() => link?.follower_summary ?? "");
   const [bioLanding, setBioLanding] = useState(() => link?.bio ?? "");
   const [verified, setVerified] = useState(() => link?.verified ?? false);
   const [heroObjectUrl, setHeroObjectUrl] = useState<string | null>(null);
@@ -102,18 +100,6 @@ export function LinkForm(props: Props) {
     }
   }
 
-  function addSocial() {
-    setSocialLinks((s) => [...s, { platform: "instagram", url: "" }]);
-  }
-
-  function updateSocial(i: number, patch: Partial<SocialLink>) {
-    setSocialLinks((s) => s.map((row, j) => (j === i ? { ...row, ...patch } : row)));
-  }
-
-  function removeSocial(i: number) {
-    setSocialLinks((s) => s.filter((_, j) => j !== i));
-  }
-
   function addCard() {
     setLandingCards((c) => [
       ...c,
@@ -133,7 +119,8 @@ export function LinkForm(props: Props) {
     <div className="grid w-full gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(280px,400px)] lg:items-start lg:gap-12">
       <form onSubmit={(e) => void onSubmit(e)} className="flex min-w-0 max-w-lg flex-col gap-5">
         <input type="hidden" name="public_page_mode" value={pageMode} />
-        <input type="hidden" name="social_links_json" value={JSON.stringify(socialLinks)} />
+        <input type="hidden" name="social_links_json" value="[]" />
+        <input type="hidden" name="follower_summary" value="" />
         <input type="hidden" name="landing_cards_json" value={JSON.stringify(landingCards)} />
 
         {props.mode === "create" && (
@@ -246,17 +233,6 @@ export function LinkForm(props: Props) {
           </label>
 
           <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium text-zinc-800">Follower summary (optional)</span>
-            <input
-              name="follower_summary"
-              value={followerSummary}
-              onChange={(e) => setFollowerSummary(e.target.value)}
-              placeholder="e.g. 35.3M Total Followers"
-              className={inputClass}
-            />
-          </label>
-
-          <label className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-zinc-800">Bio</span>
             <textarea
               name="bio"
@@ -267,59 +243,6 @@ export function LinkForm(props: Props) {
               className={`${inputClass} resize-y`}
             />
           </label>
-
-          <div className="flex flex-col gap-2 rounded-2xl border border-zinc-200/90 bg-white p-4">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-medium text-zinc-800">Social icons</span>
-              <button
-                type="button"
-                onClick={addSocial}
-                className="rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100"
-              >
-                Add
-              </button>
-            </div>
-            <p className="text-xs text-zinc-500">Round buttons under your name on the public page.</p>
-            {socialLinks.length === 0 && (
-              <p className="text-xs text-zinc-400">None yet — add Instagram, TikTok, etc.</p>
-            )}
-            <ul className="flex flex-col gap-2">
-              {socialLinks.map((row, i) => (
-                <li key={i} className="flex flex-wrap items-end gap-2 rounded-xl border border-zinc-100 bg-zinc-50/80 p-2">
-                  <label className="flex min-w-[8rem] flex-1 flex-col gap-1 text-xs font-medium text-zinc-600">
-                    Platform
-                    <select
-                      value={row.platform}
-                      onChange={(e) => updateSocial(i, { platform: e.target.value })}
-                      className={inputClass + " py-2 text-sm"}
-                    >
-                      {PLATFORM_OPTIONS.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="flex min-w-[12rem] flex-[2] flex-col gap-1 text-xs font-medium text-zinc-600">
-                    URL
-                    <input
-                      value={row.url}
-                      onChange={(e) => updateSocial(i, { url: e.target.value })}
-                      placeholder="https://"
-                      className={inputClass}
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => removeSocial(i)}
-                    className="rounded-lg px-2 py-2 text-xs font-medium text-red-600 hover:bg-red-50"
-                  >
-                    Remove
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
 
           <div className="flex flex-col gap-2 rounded-2xl border border-zinc-200/90 bg-white p-4">
             <div className="flex items-center justify-between gap-2">
@@ -465,10 +388,8 @@ export function LinkForm(props: Props) {
           displayName={displayName}
           handle={handle}
           verified={verified}
-          followerSummary={followerSummary}
           bio={bioLanding}
           heroUrl={previewHeroUrl}
-          socialLinks={socialLinks}
           cards={landingCards}
         />
       ) : (
