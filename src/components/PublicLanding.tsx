@@ -147,7 +147,7 @@ export function PublicLanding({
       <div
         className={
           embedded
-            ? "relative h-[min(36vh,300px)] w-full overflow-hidden bg-zinc-900"
+            ? "relative h-40 w-full overflow-hidden bg-zinc-900"
             : "relative h-[min(42vh,420px)] w-full overflow-hidden bg-zinc-900"
         }
       >
@@ -165,9 +165,19 @@ export function PublicLanding({
         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
       </div>
 
-      <div className="relative z-10 -mt-20 px-5 pb-16 pt-2">
-        <div className="mx-auto flex max-w-md flex-col items-center text-center">
-          <h1 className="flex flex-wrap items-center justify-center gap-1.5 text-3xl font-bold tracking-tight">
+      <div
+        className={
+          embedded
+            ? "relative z-10 -mt-14 max-w-full px-4 pb-14 pt-2"
+            : "relative z-10 -mt-20 px-5 pb-16 pt-2"
+        }
+      >
+        <div
+          className={`mx-auto flex flex-col items-center text-center ${embedded ? "max-w-full" : "max-w-md"}`}
+        >
+          <h1
+            className={`flex flex-wrap items-center justify-center gap-1.5 font-bold tracking-tight ${embedded ? "text-2xl" : "text-3xl"}`}
+          >
             <span>{name}</span>
             {verified && (
               <span className="inline-flex text-indigo-400" title="Verified">
@@ -190,11 +200,21 @@ export function PublicLanding({
         </div>
 
         {sorted.length > 0 && (
-          <div className="mx-auto mt-10 grid max-w-md grid-cols-1 gap-2.5 px-1">
+          <div
+            className={
+              embedded
+                ? "mx-auto mt-6 grid max-w-full grid-cols-1 gap-2.5 px-0"
+                : "mx-auto mt-10 grid max-w-md grid-cols-1 gap-2.5 px-1"
+            }
+          >
             {top && (
               <LandingCardLink
                 card={top}
-                className="h-[4.25rem] w-full sm:h-[4.75rem]"
+                className={
+                  embedded
+                    ? "h-[3.75rem] w-full"
+                    : "h-[4.25rem] w-full sm:h-[4.75rem]"
+                }
                 isPreview={isPreview}
               />
             )}
@@ -202,7 +222,7 @@ export function PublicLanding({
               <LandingCardLink
                 key={`${card.url}-${i}`}
                 card={card}
-                className="h-16 w-full sm:h-[4.25rem]"
+                className={embedded ? "h-14 w-full" : "h-16 w-full sm:h-[4.25rem]"}
                 isPreview={isPreview}
               />
             ))}
@@ -245,12 +265,26 @@ function LandingCardLink({
         <div className={`absolute inset-0 ${grad}`} />
       )}
       <div className="absolute inset-0 bg-gradient-to-l from-black/65 via-black/35 to-black/80" />
-      <div className="absolute inset-y-0 left-3 right-[3.25rem] flex items-center sm:left-4 sm:right-16">
-        <span className="line-clamp-2 text-left text-sm font-bold tracking-tight sm:text-base">
+      <div
+        className={
+          isPreview
+            ? "absolute inset-y-0 left-3 right-[3.25rem] flex items-center"
+            : "absolute inset-y-0 left-3 right-[3.25rem] flex items-center sm:left-4 sm:right-16"
+        }
+      >
+        <span
+          className={`line-clamp-2 text-left font-bold tracking-tight ${isPreview ? "text-sm" : "text-sm sm:text-base"}`}
+        >
           {card.label}
         </span>
       </div>
-      <div className="absolute right-2.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 ring-1 ring-white/20 sm:right-3 sm:h-10 sm:w-10">
+      <div
+        className={
+          isPreview
+            ? "absolute right-2.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 ring-1 ring-white/20"
+            : "absolute right-2.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 ring-1 ring-white/20 sm:right-3 sm:h-10 sm:w-10"
+        }
+      >
         {card.locked ? (
           <svg className="h-4 w-4 text-white sm:h-5 sm:w-5" viewBox="0 0 24 24" aria-hidden>
             <path
