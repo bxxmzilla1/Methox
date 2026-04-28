@@ -238,9 +238,7 @@ export function PublicLanding({
               <LandingCardLink
                 card={top}
                 className={
-                  embedded
-                    ? "h-20 w-full"
-                    : "h-[6.75rem] w-full sm:h-32"
+                  embedded ? "h-[5.75rem] w-full" : "h-[5.75rem] w-full sm:h-[6.5rem]"
                 }
                 isPreview={isPreview}
               />

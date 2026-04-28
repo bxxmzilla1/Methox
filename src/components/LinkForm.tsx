@@ -42,6 +42,8 @@ export function LinkForm(props: Props) {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+  const dragFromIdxRef = useRef<number | null>(null);
 
   const isEdit = props.mode === "edit";
   const link = isEdit ? props.link : null;
@@ -193,6 +195,17 @@ export function LinkForm(props: Props) {
 
   function updateCard(i: number, patch: Partial<LandingCard>) {
     setLandingCards((c) => c.map((row, j) => (j === i ? { ...row, ...patch } : row)));
+  }
+
+  function moveCard(from: number, to: number) {
+    if (from === to) return;
+    setLandingCards((prev) => {
+      if (from < 0 || to < 0 || from >= prev.length || to >= prev.length) return prev;
+      const next = [...prev];
+      const [item] = next.splice(from, 1);
+      next.splice(to, 0, item);
+      return next;
+    });
   }
 
   function removeCard(i: number) {
@@ -353,11 +366,62 @@ export function LinkForm(props: Props) {
             )}
             <ul className="flex flex-col gap-3">
               {landingCards.map((row, i) => (
-                <li key={i} className="flex flex-col gap-2 rounded-xl border border-zinc-100 bg-zinc-50/80 p-3">
+                <li
+                  key={i}
+                  draggable
+                  onDragStart={(e) => {
+                    dragFromIdxRef.current = i;
+                    setDragOverIdx(i);
+                    try {
+                      e.dataTransfer.effectAllowed = "move";
+                      e.dataTransfer.setData("text/plain", String(i));
+                    } catch {
+                      // ignore
+                    }
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDragOverIdx(i);
+                    try {
+                      e.dataTransfer.dropEffect = "move";
+                    } catch {
+                      // ignore
+                    }
+                  }}
+                  onDragLeave={() => {
+                    setDragOverIdx((cur) => (cur === i ? null : cur));
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const from =
+                      dragFromIdxRef.current ??
+                      (() => {
+                        try {
+                          return Number(e.dataTransfer.getData("text/plain"));
+                        } catch {
+                          return NaN;
+                        }
+                      })();
+                    if (Number.isFinite(from)) moveCard(from, i);
+                    dragFromIdxRef.current = null;
+                    setDragOverIdx(null);
+                  }}
+                  onDragEnd={() => {
+                    dragFromIdxRef.current = null;
+                    setDragOverIdx(null);
+                  }}
+                  className={`flex flex-col gap-2 rounded-xl border bg-zinc-50/80 p-3 transition ${
+                    dragOverIdx === i ? "border-emerald-300 ring-2 ring-emerald-500/15" : "border-zinc-100"
+                  }`}
+                  title="Drag to reorder"
+                >
                   {cardClearImage[i] ? (
                     <input type="hidden" name={`card_clear_image_${i}`} value="1" />
                   ) : null}
                   <div className="flex flex-wrap gap-2">
+                    <div className="flex items-center justify-center rounded-lg border border-zinc-200 bg-white px-2.5 py-2 text-xs font-semibold text-zinc-500">
+                      Drag
+                    </div>
                     <label className="flex min-w-[8rem] flex-1 flex-col gap-1 text-xs font-medium text-zinc-600">
                       Platform / icon
                       <select
@@ -475,6 +539,24 @@ export function LinkForm(props: Props) {
                         />
                         Locked icon
                       </label>
+                      {i > 0 ? (
+                        <button
+                          type="button"
+                          onClick={() => moveCard(i, i - 1)}
+                          className="rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-zinc-700 hover:bg-zinc-50"
+                        >
+                          ↑ Move up
+                        </button>
+                      ) : null}
+                      {i < landingCards.length - 1 ? (
+                        <button
+                          type="button"
+                          onClick={() => moveCard(i, i + 1)}
+                          className="rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-zinc-700 hover:bg-zinc-50"
+                        >
+                          ↓ Move down
+                        </button>
+                      ) : null}
                       <button
                         type="button"
                         onClick={() => removeCard(i)}
