@@ -306,7 +306,7 @@ function LandingCardLink({
         </span>
       </div>
       {card.locked && card.locked_hint ? (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-16 text-center">
+        <div className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center px-4 text-center sm:bottom-3.5">
           <span
             className={`rounded-full bg-black/35 px-3 py-1 text-[11px] font-semibold tracking-wide text-white/85 ring-1 ring-white/15 backdrop-blur-sm ${isPreview ? "" : "sm:text-xs"}`}
           >
