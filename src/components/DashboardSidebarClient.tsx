@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { updateDashboardLinkProfile } from "@/app/actions/links";
+import { dashboardBioFromRow } from "@/lib/link-bio";
 import type { LinkStats } from "@/lib/stats";
 import { publicScreenshotUrl } from "@/lib/storage";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
@@ -15,6 +16,7 @@ export type DashboardLinkRow = {
   id: string;
   slug: string;
   bio: string;
+  dashboard_bio?: string | null;
   screenshot_path: string | null;
   hero_image_path?: string | null;
   public_page_mode?: string | null;
@@ -58,11 +60,11 @@ export function DashboardSidebarClient({ links, statsByLinkId, siteBase }: Props
   useEffect(() => {
     if (!selected) return;
     setDraftSlug(selected.slug);
-    setDraftBio(selected.bio ?? "");
+    setDraftBio(dashboardBioFromRow(selected as unknown as Record<string, unknown>));
     setDashFile(null);
     setClearDashShot(false);
     setFormError(null);
-  }, [selected?.id, selected?.slug, selected?.bio, selected?.screenshot_path]);
+  }, [selected?.id, selected?.slug, selected?.bio, selected?.dashboard_bio, selected?.screenshot_path]);
 
   useEffect(() => {
     if (!dashFile) {

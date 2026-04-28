@@ -196,6 +196,7 @@ export async function createLink(formData: FormData) {
       slug,
       username: "",
       bio: public_page_mode === "redirect" ? bioRedirect : "",
+      dashboard_bio: "",
       landing_bio: public_page_mode === "landing" ? landingBio : "",
       destination_url,
       public_page_mode,
@@ -362,7 +363,7 @@ export async function updateLink(linkId: string, slug: string, formData: FormDat
   return { ok: true };
 }
 
-/** Dashboard only: slug (public path), bio, and dashboard preview image (`screenshot_path`). Does not touch landing content or `landing_bio`. */
+/** Dashboard only: slug, `dashboard_bio` (+ legacy `bio` mirror), preview image. Does not touch `landing_bio`. */
 export async function updateDashboardLinkProfile(formData: FormData) {
   const supabase = await createClient();
   const {
@@ -394,6 +395,7 @@ export async function updateDashboardLinkProfile(formData: FormData) {
   }
 
   const patch: Record<string, unknown> = {
+    dashboard_bio: bio,
     bio,
     updated_at: new Date().toISOString(),
   };
