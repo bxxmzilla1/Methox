@@ -3,6 +3,8 @@
 :root {
   --background: #fafafa;
   --foreground: #18181b;
+  /** Shared period so lock ring glow and icon scale pulse stay in phase */
+  --lock-pulse-period: 2s;
 }
 
 @theme inline {
@@ -33,7 +35,7 @@ body {
 }
 
 .animate-lock-glow {
-  animation: lock-glow-pulse 2.2s ease-in-out infinite;
+  animation: lock-glow-pulse var(--lock-pulse-period) ease-in-out infinite;
 }
 
 @keyframes lock-icon-pulse {
@@ -50,5 +52,5 @@ body {
 
 .animate-lock-icon-pulse {
   transform-origin: center;
-  animation: lock-icon-pulse 1.35s ease-in-out infinite;
+  animation: lock-icon-pulse var(--lock-pulse-period) ease-in-out infinite;
 }
