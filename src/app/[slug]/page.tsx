@@ -39,7 +39,7 @@ export default async function PublicLinkPage({ params }: PageProps) {
   const { data: row } = await supabase
     .from("links")
     .select(
-      "id, slug, bio, screenshot_path, hero_image_path, landing_hero_focus, destination_url, public_page_mode, display_name, handle, landing_cards"
+      "id, slug, bio, landing_bio, screenshot_path, hero_image_path, landing_hero_focus, destination_url, public_page_mode, display_name, handle, landing_cards"
     )
     .eq("slug", slug)
     .single();
@@ -69,6 +69,11 @@ export default async function PublicLinkPage({ params }: PageProps) {
   const heroUrl = publicScreenshotUrl(heroPath);
   const heroFocus = coerceLandingHeroFocus(row.landing_hero_focus);
   const cards = coerceLandingCards(row.landing_cards);
+  const landingBioRaw = (row.landing_bio as string | null | undefined) ?? "";
+  const legacyBio = (row.bio as string | null | undefined) ?? "";
+  /** Prefer `landing_bio`; fall back to `bio` only when the column is absent (pre-migration). */
+  const publicBio =
+    row.landing_bio !== null && row.landing_bio !== undefined ? landingBioRaw : legacyBio;
 
   return (
     <>
@@ -77,7 +82,7 @@ export default async function PublicLinkPage({ params }: PageProps) {
         slug={row.slug as string}
         displayName={(row.display_name as string) ?? ""}
         handle={(row.handle as string) ?? ""}
-        bio={(row.bio as string) ?? ""}
+        bio={publicBio}
         heroUrl={heroUrl}
         heroFocus={heroFocus}
         cards={cards}

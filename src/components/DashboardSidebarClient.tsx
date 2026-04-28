@@ -312,7 +312,8 @@ export function DashboardSidebarClient({ links, statsByLinkId, siteBase }: Props
                       Bio
                     </label>
                     <p className="mt-0.5 text-[11px] text-zinc-500">
-                      Edited here only — not in the landing editor. Still the same bio shown on your public page.
+                      Dashboard-only copy. Your public landing bio is edited in the landing page editor — these stay
+                      separate.
                     </p>
                     <textarea
                       id={`dash-bio-${selected.id}`}

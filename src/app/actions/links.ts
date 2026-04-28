@@ -21,6 +21,7 @@ export type LinkRow = {
   slug: string;
   username: string;
   bio: string;
+  landing_bio: string;
   screenshot_path: string | null;
   hero_image_path: string | null;
   landing_hero_focus: ImageFocus;
@@ -153,7 +154,8 @@ export async function createLink(formData: FormData) {
   if (!user) return { error: "Sign in required." };
 
   const slug = String(formData.get("slug") ?? "").trim().toLowerCase();
-  const bio = String(formData.get("bio") ?? "");
+  const bioRedirect = String(formData.get("bio") ?? "");
+  const landingBio = String(formData.get("landing_bio") ?? "");
   const destinationRaw = String(formData.get("destination_url") ?? "").trim();
   const destinationNorm = normalizeHttpUrl(destinationRaw);
   const public_page_mode = readPageMode(formData);
@@ -193,7 +195,8 @@ export async function createLink(formData: FormData) {
       user_id: user.id,
       slug,
       username: "",
-      bio,
+      bio: public_page_mode === "redirect" ? bioRedirect : "",
+      landing_bio: public_page_mode === "landing" ? landingBio : "",
       destination_url,
       public_page_mode,
       display_name,
@@ -270,7 +273,8 @@ export async function updateLink(linkId: string, slug: string, formData: FormDat
   const heroFocusParsed = parseLandingHeroFocusJson(String(formData.get("landing_hero_focus_json") ?? "{}"));
   if (!heroFocusParsed.ok) return { error: heroFocusParsed.error };
 
-  const bio = String(formData.get("bio") ?? "");
+  const bioRedirect = String(formData.get("bio") ?? "");
+  const landingBio = String(formData.get("landing_bio") ?? "");
   const destinationRaw = String(formData.get("destination_url") ?? "").trim();
   const destinationNorm = normalizeHttpUrl(destinationRaw);
   const public_page_mode = readPageMode(formData);
@@ -284,12 +288,17 @@ export async function updateLink(linkId: string, slug: string, formData: FormDat
   const destination_url = destinationNorm;
 
   const patch: Record<string, unknown> = {
-    bio,
     destination_url,
     public_page_mode,
     landing_hero_focus: heroFocusParsed.data,
     updated_at: new Date().toISOString(),
   };
+
+  if (public_page_mode === "redirect") {
+    patch.bio = bioRedirect;
+  } else {
+    patch.landing_bio = landingBio;
+  }
 
   if (public_page_mode === "landing") {
     const display_name = String(formData.get("display_name") ?? "").trim().slice(0, 120);
@@ -353,7 +362,7 @@ export async function updateLink(linkId: string, slug: string, formData: FormDat
   return { ok: true };
 }
 
-/** Dashboard only: slug (public path), bio, and dashboard preview image (`screenshot_path`). Does not touch landing/hero. */
+/** Dashboard only: slug (public path), bio, and dashboard preview image (`screenshot_path`). Does not touch landing content or `landing_bio`. */
 export async function updateDashboardLinkProfile(formData: FormData) {
   const supabase = await createClient();
   const {

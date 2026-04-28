@@ -56,7 +56,7 @@ export function LinkForm(props: Props) {
   const [slugDraft, setSlugDraft] = useState("");
   const [displayName, setDisplayName] = useState(() => link?.display_name ?? "");
   const [handle, setHandle] = useState(() => link?.handle ?? "");
-  const [bioLanding, setBioLanding] = useState(() => link?.bio ?? "");
+  const [bioLanding, setBioLanding] = useState(() => link?.landing_bio ?? "");
   const [heroObjectUrl, setHeroObjectUrl] = useState<string | null>(null);
   const [cardFiles, setCardFiles] = useState<Record<number, File>>({});
   const [cardClearImage, setCardClearImage] = useState<Record<number, boolean>>({});
@@ -303,7 +303,7 @@ export function LinkForm(props: Props) {
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-zinc-800">Bio</span>
             <textarea
-              name="bio"
+              name="landing_bio"
               rows={5}
               value={bioLanding}
               onChange={(e) => setBioLanding(e.target.value)}
