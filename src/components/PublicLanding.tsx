@@ -188,7 +188,7 @@ export function PublicLanding({
 
           {bio.trim() && (
             <p
-              className={`max-w-prose whitespace-pre-wrap text-sm leading-relaxed text-zinc-200 ${embedded ? "mt-4" : "mt-5"}`}
+              className={`max-w-prose whitespace-pre-wrap leading-relaxed text-zinc-200 ${embedded ? "mt-4 text-base" : "mt-5 text-base sm:text-lg"}`}
             >
               {bio.trim()}
             </p>
