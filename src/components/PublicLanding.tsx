@@ -7,7 +7,6 @@ import {
   focusToObjectPosition,
   slugToDisplayName,
 } from "@/lib/landing-data";
-import { SessionRecorderClient } from "@/components/SessionRecorderClient";
 import { applyGeoPlaceholders, type ViewerGeo } from "@/lib/ipinfo";
 import { cardGradientClass, type PlatformId } from "@/lib/platforms";
 import { publicScreenshotUrl } from "@/lib/storage";
@@ -112,7 +111,6 @@ function cardBackgroundUrl(card: LandingCard): string | null {
 
 export type PublicLandingProps = {
   slug: string;
-  linkId?: string;
   displayName: string;
   handle: string;
   bio: string;
@@ -127,7 +125,6 @@ export type PublicLandingProps = {
 
 export function PublicLanding({
   slug,
-  linkId,
   displayName,
   handle,
   bio,
@@ -205,7 +202,6 @@ export function PublicLanding({
             : "relative z-10 -mt-20 px-5 pb-16 pt-2"
         }
       >
-        {linkId ? <SessionRecorderClient linkId={linkId} enabled={!embedded && !isPreview} /> : null}
         <div
           className={`mx-auto flex flex-col items-center text-center ${embedded ? "max-w-full" : "max-w-md"}`}
         >

@@ -71,7 +71,6 @@ export default async function PublicLinkPage({ params }: PageProps) {
       <VisitorTracker linkId={linkId} />
       <PublicLanding
         slug={row.slug as string}
-        linkId={linkId}
         displayName={(row.display_name as string) ?? ""}
         handle={(row.handle as string) ?? ""}
         bio={publicBio}
