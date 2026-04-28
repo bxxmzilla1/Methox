@@ -118,7 +118,7 @@ export function LinkForm(props: Props) {
     <form onSubmit={(e) => void onSubmit(e)} className="flex max-w-lg flex-col gap-5">
       {props.mode === "create" && (
         <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-zinc-800">Path</span>
+          <span className="text-sm font-medium text-zinc-800">Username</span>
           <div
             className={`flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50/50 px-3 py-2.5 ring-emerald-500/0 transition focus-within:border-emerald-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-emerald-500/20`}
           >
@@ -126,26 +126,16 @@ export function LinkForm(props: Props) {
             <input
               name="slug"
               required
-              placeholder="example"
+              placeholder="your-handle"
               className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-zinc-400"
               autoComplete="off"
             />
           </div>
-          <span className="text-xs text-zinc-500">Public URL will be /your-path (e.g. /example)</span>
+          <span className="text-xs text-zinc-500">
+            Your public page will be at <code className="rounded bg-zinc-100 px-1 py-0.5 text-zinc-700">/your-handle</code>
+          </span>
         </label>
       )}
-
-      <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-zinc-800">Username</span>
-        <input
-          name="username"
-          type="text"
-          defaultValue={link?.username ?? ""}
-          placeholder="Display name"
-          autoComplete="username"
-          className={inputClass}
-        />
-      </label>
 
       <label className="flex flex-col gap-1.5">
         <span className="text-sm font-medium text-zinc-800">Bio</span>
@@ -173,6 +163,19 @@ export function LinkForm(props: Props) {
         {isEdit && link?.screenshot_path && !file && (
           <span className="text-xs text-zinc-500">Current image kept unless you choose a new file.</span>
         )}
+      </label>
+
+      <label className="flex flex-col gap-1.5">
+        <span className="text-sm font-medium text-zinc-800">Target Model</span>
+        <input
+          name="username"
+          type="text"
+          defaultValue={link?.username ?? ""}
+          placeholder="Optional"
+          autoComplete="off"
+          className={inputClass}
+        />
+        <span className="text-xs text-zinc-500">Optional — shown on your dashboard only.</span>
       </label>
 
       {error && (

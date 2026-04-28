@@ -108,8 +108,8 @@ export default async function DashboardPage() {
                     <div className="min-w-0 flex-1 space-y-4">
                       <div className="flex flex-wrap items-center gap-2">
                         {link.username?.trim() && (
-                          <span className="rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-0.5 text-sm font-medium text-zinc-800">
-                            @{link.username.trim()}
+                          <span className="rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-0.5 text-xs font-medium text-zinc-700">
+                            <span className="text-zinc-500">Target model</span> · {link.username.trim()}
                           </span>
                         )}
                         <code className="rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-sm font-medium text-emerald-800">
