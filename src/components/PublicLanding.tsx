@@ -106,7 +106,6 @@ export type PublicLandingProps = {
   slug: string;
   displayName: string;
   handle: string;
-  verified: boolean;
   bio: string;
   heroUrl: string | null;
   heroFocus?: ImageFocus | null;
@@ -121,7 +120,6 @@ export function PublicLanding({
   slug,
   displayName,
   handle,
-  verified,
   bio,
   heroUrl,
   heroFocus,
@@ -132,9 +130,9 @@ export function PublicLanding({
   const heroPos = focusToObjectPosition(heroFocus ?? DEFAULT_IMAGE_FOCUS);
   const name = displayName.trim() || slugToDisplayName(slug);
   const handleText = formatHandle(handle);
-  const sorted = [...cards].sort((a, b) => Number(b.featured) - Number(a.featured));
-  const top = sorted.find((c) => c.featured);
-  const rest = top ? sorted.filter((c) => c !== top) : sorted;
+  // Order is list order: first card is always the taller “featured” bar (no UI toggle).
+  const top = cards[0];
+  const rest = cards.slice(1);
 
   return (
     <div
@@ -180,13 +178,11 @@ export function PublicLanding({
             className={`flex flex-wrap items-center justify-center gap-1.5 font-bold tracking-tight ${embedded ? "text-[1.65rem] leading-tight" : "text-3xl"}`}
           >
             <span>{name}</span>
-            {verified && (
-              <span className="inline-flex shrink-0 text-blue-500" title="Verified">
-                <svg className="h-7 w-7 sm:h-8 sm:w-8" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                  <path d="M12.01 2.011a3.2 3.2 0 0 1 2.113 .797l.154 .145l.698 .698a1.2 1.2 0 0 0 .71 .341l.135 .008h1a3.2 3.2 0 0 1 3.195 3.018l.005 .182v1c0 .27 .092 .533 .258 .743l.09 .1l.697 .698a3.2 3.2 0 0 1 .147 4.382l-.145 .154l-.698 .698a1.2 1.2 0 0 0 -.341 .71l-.008 .135v1a3.2 3.2 0 0 1 -3.018 3.195l-.182 .005h-1a1.2 1.2 0 0 0 -.743 .258l-.1 .09l-.698 .697a3.2 3.2 0 0 1 -4.382 .147l-.154 -.145l-.698 -.698a1.2 1.2 0 0 0 -.71 -.341l-.135 -.008h-1a3.2 3.2 0 0 1 -3.195 -3.018l-.005 -.182v-1a1.2 1.2 0 0 0 -.258 -.743l-.09 -.1l-.697 -.698a3.2 3.2 0 0 1 -.147 -4.382l.145 -.154l.698 -.698a1.2 1.2 0 0 0 .341 -.71l.008 -.135v-1l.005 -.182a3.2 3.2 0 0 1 3.013 -3.013l.182 -.005h1a1.2 1.2 0 0 0 .743 -.258l.1 -.09l.698 -.697a3.2 3.2 0 0 1 2.269 -.944zm3.697 7.282a1 1 0 0 0 -1.414 0l-3.293 3.292l-1.293 -1.292l-.094 -.083a1 1 0 0 0 -1.32 1.497l2 2l.094 .083a1 1 0 0 0 1.32 -.083l4 -4l.083 -.094a1 1 0 0 0 -.083 -1.32z" />
-                </svg>
-              </span>
-            )}
+            <span className="inline-flex shrink-0 text-blue-500" title="Verified">
+              <svg className="h-7 w-7 sm:h-8 sm:w-8" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                <path d="M12.01 2.011a3.2 3.2 0 0 1 2.113 .797l.154 .145l.698 .698a1.2 1.2 0 0 0 .71 .341l.135 .008h1a3.2 3.2 0 0 1 3.195 3.018l.005 .182v1c0 .27 .092 .533 .258 .743l.09 .1l.697 .698a3.2 3.2 0 0 1 .147 4.382l-.145 .154l-.698 .698a1.2 1.2 0 0 0 -.341 .71l-.008 .135v1a3.2 3.2 0 0 1 -3.018 3.195l-.182 .005h-1a1.2 1.2 0 0 0 -.743 .258l-.1 .09l-.698 .697a3.2 3.2 0 0 1 -4.382 .147l-.154 -.145l-.698 -.698a1.2 1.2 0 0 0 -.71 -.341l-.135 -.008h-1a3.2 3.2 0 0 1 -3.195 -3.018l-.005 -.182v-1a1.2 1.2 0 0 0 -.258 -.743l-.09 -.1l-.697 -.698a3.2 3.2 0 0 1 -.147 -4.382l.145 -.154l.698 -.698a1.2 1.2 0 0 0 .341 -.71l.008 -.135v-1l.005 -.182a3.2 3.2 0 0 1 3.013 -3.013l.182 -.005h1a1.2 1.2 0 0 0 .743 -.258l.1 -.09l.698 -.697a3.2 3.2 0 0 1 2.269 -.944zm3.697 7.282a1 1 0 0 0 -1.414 0l-3.293 3.292l-1.293 -1.292l-.094 -.083a1 1 0 0 0 -1.32 1.497l2 2l.094 .083a1 1 0 0 0 1.32 -.083l4 -4l.083 -.094a1 1 0 0 0 -.083 -1.32z" />
+              </svg>
+            </span>
           </h1>
           {handleText && <p className="mt-1 text-sm text-zinc-400">{handleText}</p>}
 
@@ -199,7 +195,7 @@ export function PublicLanding({
           )}
         </div>
 
-        {sorted.length > 0 && (
+        {cards.length > 0 && (
           <div
             className={
               embedded

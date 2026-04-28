@@ -39,7 +39,7 @@ export default async function PublicLinkPage({ params }: PageProps) {
   const { data: row } = await supabase
     .from("links")
     .select(
-      "id, slug, bio, screenshot_path, hero_image_path, landing_hero_focus, destination_url, public_page_mode, display_name, handle, verified, landing_cards"
+      "id, slug, bio, screenshot_path, hero_image_path, landing_hero_focus, destination_url, public_page_mode, display_name, handle, landing_cards"
     )
     .eq("slug", slug)
     .single();
@@ -77,7 +77,6 @@ export default async function PublicLinkPage({ params }: PageProps) {
         slug={row.slug as string}
         displayName={(row.display_name as string) ?? ""}
         handle={(row.handle as string) ?? ""}
-        verified={Boolean(row.verified)}
         bio={(row.bio as string) ?? ""}
         heroUrl={heroUrl}
         heroFocus={heroFocus}

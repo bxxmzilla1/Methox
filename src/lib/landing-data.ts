@@ -47,6 +47,12 @@ export function defaultLandingCards(): LandingCard[] {
   return [];
 }
 
+/** First card is always the full-width top bar; others are secondary. */
+export function normalizeFeaturedFirst(cards: LandingCard[]): LandingCard[] {
+  if (cards.length === 0) return cards;
+  return cards.map((c, i) => ({ ...c, featured: i === 0 }));
+}
+
 export function parseSocialLinksJson(raw: string): { ok: true; data: SocialLink[] } | { ok: false; error: string } {
   let parsed: unknown;
   try {

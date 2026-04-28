@@ -7,7 +7,6 @@ type Props = {
   slug: string;
   displayName: string;
   handle: string;
-  verified: boolean;
   bio: string;
   heroUrl: string | null;
   heroFocus: ImageFocus;
@@ -18,7 +17,6 @@ export function LandingLivePreview({
   slug,
   displayName,
   handle,
-  verified,
   bio,
   heroUrl,
   heroFocus,
@@ -38,10 +36,9 @@ export function LandingLivePreview({
           <div className="h-full min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain">
             <PublicLanding
               slug={slug}
-              displayName={displayName}
-              handle={handle}
-              verified={verified}
-              bio={bio}
+            displayName={displayName}
+            handle={handle}
+            bio={bio}
               heroUrl={heroUrl}
               heroFocus={heroFocus}
               cards={cards}

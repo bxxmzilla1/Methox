@@ -7,7 +7,7 @@ import { publicScreenshotUrl } from "@/lib/storage";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ImageFocus, LandingCard } from "@/lib/landing-data";
-import { DEFAULT_IMAGE_FOCUS } from "@/lib/landing-data";
+import { DEFAULT_IMAGE_FOCUS, normalizeFeaturedFirst } from "@/lib/landing-data";
 import { PLATFORM_OPTIONS } from "@/lib/platforms";
 
 function reindexFiles(prev: Record<number, File>, removed: number): Record<number, File> {
@@ -49,13 +49,14 @@ export function LinkForm(props: Props) {
   const [pageMode, setPageMode] = useState<"landing" | "redirect">(
     () => link?.public_page_mode ?? "landing"
   );
-  const [landingCards, setLandingCards] = useState<LandingCard[]>(() => link?.landing_cards ?? []);
+  const [landingCards, setLandingCards] = useState<LandingCard[]>(() =>
+    normalizeFeaturedFirst(link?.landing_cards ?? [])
+  );
 
   const [slugDraft, setSlugDraft] = useState("");
   const [displayName, setDisplayName] = useState(() => link?.display_name ?? "");
   const [handle, setHandle] = useState(() => link?.handle ?? "");
   const [bioLanding, setBioLanding] = useState(() => link?.bio ?? "");
-  const [verified, setVerified] = useState(() => link?.verified ?? false);
   const [heroObjectUrl, setHeroObjectUrl] = useState<string | null>(null);
   const [cardFiles, setCardFiles] = useState<Record<number, File>>({});
   const [cardClearImage, setCardClearImage] = useState<Record<number, boolean>>({});
@@ -103,13 +104,15 @@ export function LinkForm(props: Props) {
     };
   }, [cardFiles]);
 
+  const landingCardsNormalized = useMemo(() => normalizeFeaturedFirst(landingCards), [landingCards]);
+
   const previewCards = useMemo(
     () =>
-      landingCards.map((c, i) => ({
+      landingCardsNormalized.map((c, i) => ({
         ...c,
         previewBgUrl: cardPreviewBlobs[i] ?? undefined,
       })),
-    [landingCards, cardPreviewBlobs]
+    [landingCardsNormalized, cardPreviewBlobs]
   );
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -195,7 +198,7 @@ export function LinkForm(props: Props) {
         <input type="hidden" name="social_links_json" value="[]" />
         <input type="hidden" name="follower_summary" value="" />
         <input type="hidden" name="landing_hero_focus_json" value={JSON.stringify(heroFocus)} />
-        <input type="hidden" name="landing_cards_json" value={JSON.stringify(landingCards)} />
+        <input type="hidden" name="landing_cards_json" value={JSON.stringify(landingCardsNormalized)} />
 
         {props.mode === "create" && (
           <label className="flex flex-col gap-1.5">
@@ -295,16 +298,7 @@ export function LinkForm(props: Props) {
             />
           </label>
 
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-800">
-            <input
-              type="checkbox"
-              name="verified"
-              checked={verified}
-              onChange={(e) => setVerified(e.target.checked)}
-              className="rounded border-zinc-300 text-emerald-600"
-            />
-            Show verified badge
-          </label>
+          <input type="hidden" name="verified" value="on" />
 
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-zinc-800">Bio</span>
@@ -330,8 +324,8 @@ export function LinkForm(props: Props) {
               </button>
             </div>
             <p className="text-xs text-zinc-500">
-              Full-width link bars. Mark one as <strong>featured</strong> to pin it at the top. Optionally upload a
-              background image per card.
+              The first card is shown full-width at the top; add more cards below. Optionally upload a background image
+              per card.
             </p>
             {landingCards.length === 0 && (
               <p className="text-xs text-zinc-400">Add at least one card with label and URL.</p>
@@ -438,14 +432,6 @@ export function LinkForm(props: Props) {
                     <label className="flex items-center gap-2">
                       <input
                         type="checkbox"
-                        checked={Boolean(row.featured)}
-                        onChange={(e) => updateCard(i, { featured: e.target.checked })}
-                      />
-                      Featured (full-width top)
-                    </label>
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
                         checked={Boolean(row.locked)}
                         onChange={(e) => updateCard(i, { locked: e.target.checked })}
                       />
@@ -536,7 +522,6 @@ export function LinkForm(props: Props) {
           slug={previewSlug}
           displayName={displayName}
           handle={handle}
-          verified={verified}
           bio={bioLanding}
           heroUrl={previewHeroUrl}
           heroFocus={heroFocus}
