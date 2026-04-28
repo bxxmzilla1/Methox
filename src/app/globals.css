@@ -17,3 +17,21 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
+
+@keyframes lock-glow-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 10px rgba(255, 255, 255, 0.35),
+      0 0 20px rgba(16, 185, 129, 0.3);
+  }
+  50% {
+    box-shadow:
+      0 0 18px rgba(255, 255, 255, 0.55),
+      0 0 32px rgba(16, 185, 129, 0.5);
+  }
+}
+
+.animate-lock-glow {
+  animation: lock-glow-pulse 2.2s ease-in-out infinite;
+}

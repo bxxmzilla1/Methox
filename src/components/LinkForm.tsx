@@ -181,6 +181,8 @@ export function LinkForm(props: Props) {
         platform: "instagram",
         featured: false,
         locked: false,
+        locked_glow: false,
+        locked_hint: false,
         image_path: null,
         image_url: null,
         image_focus: { ...DEFAULT_IMAGE_FOCUS },
@@ -446,22 +448,63 @@ export function LinkForm(props: Props) {
                     value={row.image_focus ?? DEFAULT_IMAGE_FOCUS}
                     onChange={(next) => updateCard(i, { image_focus: next })}
                   />
-                  <div className="flex flex-wrap items-center gap-4 text-xs text-zinc-700">
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={Boolean(row.locked)}
-                        onChange={(e) => updateCard(i, { locked: e.target.checked })}
-                      />
-                      Locked icon
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => removeCard(i)}
-                      className="ml-auto font-medium text-red-600 hover:underline"
-                    >
-                      Remove
-                    </button>
+                  <div className="flex flex-col gap-3 text-xs text-zinc-700">
+                    <div className="flex flex-wrap items-center gap-4">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(row.locked)}
+                          onChange={(e) =>
+                            updateCard(i, {
+                              locked: e.target.checked,
+                              ...(e.target.checked
+                                ? {}
+                                : { locked_glow: false, locked_hint: false }),
+                            })
+                          }
+                        />
+                        Locked icon
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => removeCard(i)}
+                        className="ml-auto font-medium text-red-600 hover:underline"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    {row.locked ? (
+                      <div className="ml-6 flex flex-col gap-2 border-l-2 border-emerald-200/80 pl-3">
+                        <label className="flex cursor-pointer items-start gap-2">
+                          <input
+                            type="checkbox"
+                            className="mt-0.5"
+                            checked={Boolean(row.locked_glow)}
+                            onChange={(e) => updateCard(i, { locked_glow: e.target.checked })}
+                          />
+                          <span>
+                            <span className="font-medium text-zinc-800">Glow and pulse lock icon</span>
+                            <span className="mt-0.5 block text-[11px] text-zinc-500">
+                              Animated highlight on the live page (visitors only).
+                            </span>
+                          </span>
+                        </label>
+                        <label className="flex cursor-pointer items-start gap-2">
+                          <input
+                            type="checkbox"
+                            className="mt-0.5"
+                            checked={Boolean(row.locked_hint)}
+                            onChange={(e) => updateCard(i, { locked_hint: e.target.checked })}
+                          />
+                          <span>
+                            <span className="font-medium text-zinc-800">Show unlock hint</span>
+                            <span className="mt-0.5 block text-[11px] text-zinc-500">
+                              Adds “Press and Hold to Unlock” under the card title.
+                            </span>
+                          </span>
+                        </label>
+                      </div>
+                    ) : null}
                   </div>
                 </li>
               ))}

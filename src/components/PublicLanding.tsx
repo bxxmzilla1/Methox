@@ -290,8 +290,8 @@ function LandingCardLink({
       <div
         className={
           isPreview
-            ? "absolute inset-y-0 left-3.5 right-[3.75rem] flex items-center"
-            : "absolute inset-y-0 left-3.5 right-[3.75rem] flex items-center sm:left-4 sm:right-[4.25rem]"
+            ? "absolute inset-y-0 left-3.5 right-[3.75rem] flex flex-col justify-center py-1"
+            : "absolute inset-y-0 left-3.5 right-[3.75rem] flex flex-col justify-center py-1 sm:left-4 sm:right-[4.25rem]"
         }
       >
         <span
@@ -299,12 +299,19 @@ function LandingCardLink({
         >
           {card.label}
         </span>
+        {card.locked && card.locked_hint ? (
+          <span
+            className={`mt-1 line-clamp-2 text-left font-medium text-white/85 ${isPreview ? "text-[11px]" : "text-[11px] sm:text-xs"}`}
+          >
+            Press and Hold to Unlock
+          </span>
+        ) : null}
       </div>
       <div
         className={
           isPreview
-            ? "absolute right-2.5 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 ring-1 ring-white/20"
-            : "absolute right-2.5 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 ring-1 ring-white/20 sm:right-3 sm:h-12 sm:w-12"
+            ? `absolute right-2.5 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 ring-1 ring-white/20 ${card.locked && card.locked_glow ? "animate-lock-glow ring-emerald-300/50" : ""}`
+            : `absolute right-2.5 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 ring-1 ring-white/20 sm:right-3 sm:h-12 sm:w-12 ${card.locked && card.locked_glow ? "animate-lock-glow ring-emerald-300/50" : ""}`
         }
       >
         {card.locked ? (

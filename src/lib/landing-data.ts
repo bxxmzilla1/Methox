@@ -26,6 +26,10 @@ export type LandingCard = {
   platform: string;
   featured?: boolean;
   locked?: boolean;
+  /** Pulsing glow on the lock icon (public landing only). */
+  locked_glow?: boolean;
+  /** Show “Press and Hold to Unlock” under the card label when locked. */
+  locked_hint?: boolean;
   /** Storage object path in screenshots bucket (userId/linkId/cards/...) */
   image_path?: string | null;
   /** Legacy external image URL */
@@ -91,6 +95,8 @@ export function parseLandingCardsJson(raw: string): { ok: true; data: LandingCar
     const platform = String(rec.platform ?? "other").slice(0, 64);
     const featured = Boolean(rec.featured);
     const locked = Boolean(rec.locked);
+    const locked_glow = Boolean(rec.locked_glow);
+    const locked_hint = Boolean(rec.locked_hint);
     let image_url: string | null | undefined = undefined;
     if (rec.image_url != null && String(rec.image_url).trim()) {
       const img = String(rec.image_url).trim().slice(0, 2048);
@@ -115,6 +121,8 @@ export function parseLandingCardsJson(raw: string): { ok: true; data: LandingCar
       platform,
       featured,
       locked,
+      locked_glow,
+      locked_hint,
       image_url: image_url ?? null,
       image_path: image_path ?? null,
       image_focus: image_focus ?? null,
