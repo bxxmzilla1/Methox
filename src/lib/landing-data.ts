@@ -20,6 +20,9 @@ export function focusToObjectPosition(f: ImageFocus): string {
 }
 
 export type SocialLink = { platform: string; url: string };
+
+export const DEFAULT_LOCKED_HINT_TEXT = "Press and Hold to Unlock";
+
 export type LandingCard = {
   label: string;
   url: string;
@@ -28,8 +31,10 @@ export type LandingCard = {
   locked?: boolean;
   /** Pulsing glow on the lock icon (public landing only). */
   locked_glow?: boolean;
-  /** Show “Press and Hold to Unlock” under the card label when locked. */
+  /** Show unlock hint under the card label when locked. */
   locked_hint?: boolean;
+  /** Custom hint copy; empty uses DEFAULT_LOCKED_HINT_TEXT. */
+  locked_hint_text?: string;
   /** Storage object path in screenshots bucket (userId/linkId/cards/...) */
   image_path?: string | null;
   /** Legacy external image URL */
@@ -97,6 +102,10 @@ export function parseLandingCardsJson(raw: string): { ok: true; data: LandingCar
     const locked = Boolean(rec.locked);
     const locked_glow = Boolean(rec.locked_glow);
     const locked_hint = Boolean(rec.locked_hint);
+    let locked_hint_text: string | undefined = undefined;
+    if (rec.locked_hint_text != null && String(rec.locked_hint_text).trim()) {
+      locked_hint_text = String(rec.locked_hint_text).trim().slice(0, 200);
+    }
     let image_url: string | null | undefined = undefined;
     if (rec.image_url != null && String(rec.image_url).trim()) {
       const img = String(rec.image_url).trim().slice(0, 2048);
@@ -123,6 +132,7 @@ export function parseLandingCardsJson(raw: string): { ok: true; data: LandingCar
       locked,
       locked_glow,
       locked_hint,
+      locked_hint_text,
       image_url: image_url ?? null,
       image_path: image_path ?? null,
       image_focus: image_focus ?? null,

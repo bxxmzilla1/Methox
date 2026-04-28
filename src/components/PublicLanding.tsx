@@ -1,7 +1,12 @@
 "use client";
 
 import type { ImageFocus, LandingCard } from "@/lib/landing-data";
-import { DEFAULT_IMAGE_FOCUS, focusToObjectPosition, slugToDisplayName } from "@/lib/landing-data";
+import {
+  DEFAULT_IMAGE_FOCUS,
+  DEFAULT_LOCKED_HINT_TEXT,
+  focusToObjectPosition,
+  slugToDisplayName,
+} from "@/lib/landing-data";
 import { applyGeoPlaceholders, type ViewerGeo } from "@/lib/ipinfo";
 import { cardGradientClass, type PlatformId } from "@/lib/platforms";
 import { publicScreenshotUrl } from "@/lib/storage";
@@ -301,9 +306,9 @@ function LandingCardLink({
         </span>
         {card.locked && card.locked_hint ? (
           <span
-            className={`mt-1 line-clamp-2 text-left font-medium text-white/85 ${isPreview ? "text-[11px]" : "text-[11px] sm:text-xs"}`}
+            className={`mt-1.5 line-clamp-3 text-left font-semibold tracking-tight text-white/90 ${isPreview ? "text-sm" : "text-sm sm:text-base"}`}
           >
-            Press and Hold to Unlock
+            {card.locked_hint_text?.trim() || DEFAULT_LOCKED_HINT_TEXT}
           </span>
         ) : null}
       </div>
@@ -315,7 +320,11 @@ function LandingCardLink({
         }
       >
         {card.locked ? (
-          <svg className="h-5 w-5 text-white sm:h-6 sm:w-6" viewBox="0 0 24 24" aria-hidden>
+          <svg
+            className={`h-5 w-5 text-white sm:h-6 sm:w-6 ${card.locked_glow ? "animate-lock-icon-pulse" : ""}`}
+            viewBox="0 0 24 24"
+            aria-hidden
+          >
             <path
               fill="currentColor"
               d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm-3 8V7a3 3 0 1 1 6 0v3H9z"

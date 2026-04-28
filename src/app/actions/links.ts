@@ -76,6 +76,7 @@ function stripCardForInsert(c: LandingCard): LandingCard {
     locked: c.locked,
     locked_glow: c.locked_glow,
     locked_hint: c.locked_hint,
+    locked_hint_text: c.locked_hint_text,
     image_path: null,
     image_url: null,
     image_focus: c.image_focus ?? null,

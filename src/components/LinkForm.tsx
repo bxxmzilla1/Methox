@@ -7,7 +7,7 @@ import { publicScreenshotUrl } from "@/lib/storage";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ImageFocus, LandingCard } from "@/lib/landing-data";
-import { DEFAULT_IMAGE_FOCUS, normalizeFeaturedFirst } from "@/lib/landing-data";
+import { DEFAULT_IMAGE_FOCUS, DEFAULT_LOCKED_HINT_TEXT, normalizeFeaturedFirst } from "@/lib/landing-data";
 import { PLATFORM_OPTIONS } from "@/lib/platforms";
 
 function reindexFiles(prev: Record<number, File>, removed: number): Record<number, File> {
@@ -459,7 +459,11 @@ export function LinkForm(props: Props) {
                               locked: e.target.checked,
                               ...(e.target.checked
                                 ? {}
-                                : { locked_glow: false, locked_hint: false }),
+                                : {
+                                    locked_glow: false,
+                                    locked_hint: false,
+                                    locked_hint_text: undefined,
+                                  }),
                             })
                           }
                         />
@@ -485,7 +489,7 @@ export function LinkForm(props: Props) {
                           <span>
                             <span className="font-medium text-zinc-800">Glow and pulse lock icon</span>
                             <span className="mt-0.5 block text-[11px] text-zinc-500">
-                              Animated highlight on the live page (visitors only).
+                              Soft ring on the button plus a scale pulse on the lock (live page only).
                             </span>
                           </span>
                         </label>
@@ -494,15 +498,40 @@ export function LinkForm(props: Props) {
                             type="checkbox"
                             className="mt-0.5"
                             checked={Boolean(row.locked_hint)}
-                            onChange={(e) => updateCard(i, { locked_hint: e.target.checked })}
+                            onChange={(e) =>
+                              updateCard(i, {
+                                locked_hint: e.target.checked,
+                                locked_hint_text: e.target.checked
+                                  ? row.locked_hint_text?.trim()
+                                    ? row.locked_hint_text
+                                    : DEFAULT_LOCKED_HINT_TEXT
+                                  : undefined,
+                              })
+                            }
                           />
                           <span>
                             <span className="font-medium text-zinc-800">Show unlock hint</span>
                             <span className="mt-0.5 block text-[11px] text-zinc-500">
-                              Adds “Press and Hold to Unlock” under the card title.
+                              Extra line under the card title (customize below).
                             </span>
                           </span>
                         </label>
+                        {row.locked_hint ? (
+                          <label className="flex flex-col gap-1 pl-6">
+                            <span className="text-[11px] font-medium text-zinc-600">Unlock hint text</span>
+                            <input
+                              type="text"
+                              value={row.locked_hint_text ?? ""}
+                              onChange={(e) =>
+                                updateCard(i, {
+                                  locked_hint_text: e.target.value.slice(0, 200),
+                                })
+                              }
+                              placeholder={DEFAULT_LOCKED_HINT_TEXT}
+                              className={inputClass + " text-sm"}
+                            />
+                          </label>
+                        ) : null}
                       </div>
                     ) : null}
                   </div>

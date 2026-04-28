@@ -35,3 +35,20 @@ body {
 .animate-lock-glow {
   animation: lock-glow-pulse 2.2s ease-in-out infinite;
 }
+
+@keyframes lock-icon-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.14);
+    opacity: 0.82;
+  }
+}
+
+.animate-lock-icon-pulse {
+  transform-origin: center;
+  animation: lock-icon-pulse 1.35s ease-in-out infinite;
+}
