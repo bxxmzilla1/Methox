@@ -13,7 +13,7 @@ function formatHandle(raw: string): string | null {
 
 function PlatformGlyph({ platform }: { platform: string }) {
   const p = platform as PlatformId;
-  const common = "h-5 w-5";
+  const common = "h-6 w-6";
   switch (p) {
     case "instagram":
       return (
@@ -181,12 +181,9 @@ export function PublicLanding({
           >
             <span>{name}</span>
             {verified && (
-              <span className="inline-flex text-indigo-400" title="Verified">
-                <svg className="h-7 w-7" viewBox="0 0 24 24" aria-hidden>
-                  <path
-                    fill="currentColor"
-                    d="M12 2l2.9 2.1L18 3l1.1 3.1L22 8l-1.1 3.1L22 14l-2.9 1.9L18 21l-3.1-1.1L12 22l-2.9-2.1L6 21l-1.1-3.1L2 14l1.1-3.1L2 8l2.9-1.9L6 3l3.1 1.1L12 2zm5.2 8.6l-6.2 6.2-3.2-3.2 1.4-1.4 1.8 1.8 4.8-4.8 1.4 1.4z"
-                  />
+              <span className="inline-flex shrink-0 text-blue-500" title="Verified">
+                <svg className="h-7 w-7 sm:h-8 sm:w-8" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                  <path d="M12.01 2.011a3.2 3.2 0 0 1 2.113 .797l.154 .145l.698 .698a1.2 1.2 0 0 0 .71 .341l.135 .008h1a3.2 3.2 0 0 1 3.195 3.018l.005 .182v1c0 .27 .092 .533 .258 .743l.09 .1l.697 .698a3.2 3.2 0 0 1 .147 4.382l-.145 .154l-.698 .698a1.2 1.2 0 0 0 -.341 .71l-.008 .135v1a3.2 3.2 0 0 1 -3.018 3.195l-.182 .005h-1a1.2 1.2 0 0 0 -.743 .258l-.1 .09l-.698 .697a3.2 3.2 0 0 1 -4.382 .147l-.154 -.145l-.698 -.698a1.2 1.2 0 0 0 -.71 -.341l-.135 -.008h-1a3.2 3.2 0 0 1 -3.195 -3.018l-.005 -.182v-1a1.2 1.2 0 0 0 -.258 -.743l-.09 -.1l-.697 -.698a3.2 3.2 0 0 1 -.147 -4.382l.145 -.154l.698 -.698a1.2 1.2 0 0 0 .341 -.71l.008 -.135v-1l.005 -.182a3.2 3.2 0 0 1 3.013 -3.013l.182 -.005h1a1.2 1.2 0 0 0 .743 -.258l.1 -.09l.698 -.697a3.2 3.2 0 0 1 2.269 -.944zm3.697 7.282a1 1 0 0 0 -1.414 0l-3.293 3.292l-1.293 -1.292l-.094 -.083a1 1 0 0 0 -1.32 1.497l2 2l.094 .083a1 1 0 0 0 1.32 -.083l4 -4l.083 -.094a1 1 0 0 0 -.083 -1.32z" />
                 </svg>
               </span>
             )}
@@ -215,8 +212,8 @@ export function PublicLanding({
                 card={top}
                 className={
                   embedded
-                    ? "h-[3.75rem] w-full"
-                    : "h-[4.25rem] w-full sm:h-[4.75rem]"
+                    ? "h-20 w-full"
+                    : "h-[5.25rem] w-full sm:h-24"
                 }
                 isPreview={isPreview}
               />
@@ -225,7 +222,7 @@ export function PublicLanding({
               <LandingCardLink
                 key={`${card.url}-${i}`}
                 card={card}
-                className={embedded ? "h-14 w-full" : "h-16 w-full sm:h-[4.25rem]"}
+                className={embedded ? "h-[4.75rem] w-full" : "h-[4.75rem] w-full sm:h-[5.25rem]"}
                 isPreview={isPreview}
               />
             ))}
@@ -271,12 +268,12 @@ function LandingCardLink({
       <div
         className={
           isPreview
-            ? "absolute inset-y-0 left-3 right-[3.25rem] flex items-center"
-            : "absolute inset-y-0 left-3 right-[3.25rem] flex items-center sm:left-4 sm:right-16"
+            ? "absolute inset-y-0 left-3.5 right-[3.75rem] flex items-center"
+            : "absolute inset-y-0 left-3.5 right-[3.75rem] flex items-center sm:left-4 sm:right-[4.25rem]"
         }
       >
         <span
-          className={`line-clamp-2 text-left font-bold tracking-tight ${isPreview ? "text-sm" : "text-sm sm:text-base"}`}
+          className={`line-clamp-2 text-left font-bold tracking-tight ${isPreview ? "text-base" : "text-base sm:text-lg"}`}
         >
           {card.label}
         </span>
@@ -284,12 +281,12 @@ function LandingCardLink({
       <div
         className={
           isPreview
-            ? "absolute right-2.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 ring-1 ring-white/20"
-            : "absolute right-2.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 ring-1 ring-white/20 sm:right-3 sm:h-10 sm:w-10"
+            ? "absolute right-2.5 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 ring-1 ring-white/20"
+            : "absolute right-2.5 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 ring-1 ring-white/20 sm:right-3 sm:h-12 sm:w-12"
         }
       >
         {card.locked ? (
-          <svg className="h-4 w-4 text-white sm:h-5 sm:w-5" viewBox="0 0 24 24" aria-hidden>
+          <svg className="h-5 w-5 text-white sm:h-6 sm:w-6" viewBox="0 0 24 24" aria-hidden>
             <path
               fill="currentColor"
               d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm-3 8V7a3 3 0 1 1 6 0v3H9z"
