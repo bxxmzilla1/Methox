@@ -14,6 +14,7 @@ export type DashboardLinkRow = {
   slug: string;
   bio: string;
   screenshot_path: string | null;
+  hero_image_path?: string | null;
   public_page_mode?: string | null;
   created_at: string;
 };
@@ -63,7 +64,7 @@ export function DashboardSidebarClient({ links, statsByLinkId, siteBase }: Props
         <nav className="flex max-h-[42vh] gap-2 overflow-x-auto overflow-y-auto p-3 lg:max-h-none lg:flex-col lg:gap-1 lg:overflow-x-visible">
           {links.map((link) => {
             const s = statsByLinkId[link.id];
-            const thumb = publicScreenshotUrl(link.screenshot_path);
+            const thumb = publicScreenshotUrl(link.screenshot_path ?? link.hero_image_path ?? null);
             const active = link.id === selectedId;
             return (
               <button

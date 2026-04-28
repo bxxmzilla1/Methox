@@ -6,7 +6,9 @@ import { revalidatePath } from "next/cache";
 import {
   coerceLandingCards,
   parseLandingCardsJson,
+  parseLandingHeroFocusJson,
   parseSocialLinksJson,
+  type ImageFocus,
   type LandingCard,
   type SocialLink,
 } from "@/lib/landing-data";
@@ -20,6 +22,8 @@ export type LinkRow = {
   username: string;
   bio: string;
   screenshot_path: string | null;
+  hero_image_path: string | null;
+  landing_hero_focus: ImageFocus;
   destination_url: string | null;
   public_page_mode: "landing" | "redirect";
   display_name: string;
@@ -71,6 +75,7 @@ function stripCardForInsert(c: LandingCard): LandingCard {
     locked: c.locked,
     image_path: null,
     image_url: null,
+    image_focus: c.image_focus ?? null,
   };
 }
 
@@ -132,10 +137,10 @@ async function rollbackNewLink(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
   linkId: string,
-  screenshotPath: string | null
+  heroPath: string | null
 ) {
-  if (screenshotPath) {
-    await supabase.storage.from("screenshots").remove([screenshotPath]).catch(() => undefined);
+  if (heroPath) {
+    await supabase.storage.from("screenshots").remove([heroPath]).catch(() => undefined);
   }
   await supabase.from("links").delete().eq("id", linkId).eq("user_id", userId);
 }
@@ -169,6 +174,10 @@ export async function createLink(formData: FormData) {
   const payload = readLandingPayload(formData);
   if ("error" in payload) return { error: payload.error };
 
+  const heroFocusRaw = parseLandingHeroFocusJson(String(formData.get("landing_hero_focus_json") ?? "{}"));
+  if (!heroFocusRaw.ok) return { error: heroFocusRaw.error };
+  const landing_hero_focus = heroFocusRaw.data;
+
   if (!isValidSlug(slug)) {
     return { error: "Slug must be 2–64 chars: lowercase letters, numbers, single hyphens." };
   }
@@ -193,6 +202,7 @@ export async function createLink(formData: FormData) {
       follower_summary,
       social_links: payload.social_links,
       landing_cards: cardsForInsert,
+      landing_hero_focus,
     })
     .select("id, slug")
     .single();
@@ -213,7 +223,7 @@ export async function createLink(formData: FormData) {
     heroPath = up.path;
     const { error: pathErr } = await supabase
       .from("links")
-      .update({ screenshot_path: up.path, updated_at: new Date().toISOString() })
+      .update({ hero_image_path: up.path, updated_at: new Date().toISOString() })
       .eq("id", data.id)
       .eq("user_id", user.id);
     if (pathErr) {
@@ -257,6 +267,9 @@ export async function updateLink(linkId: string, slug: string, formData: FormDat
   } = await supabase.auth.getUser();
   if (!user) return { error: "Sign in required." };
 
+  const heroFocusParsed = parseLandingHeroFocusJson(String(formData.get("landing_hero_focus_json") ?? "{}"));
+  if (!heroFocusParsed.ok) return { error: heroFocusParsed.error };
+
   const bio = String(formData.get("bio") ?? "");
   const destinationRaw = String(formData.get("destination_url") ?? "").trim();
   const destinationNorm = normalizeHttpUrl(destinationRaw);
@@ -274,6 +287,7 @@ export async function updateLink(linkId: string, slug: string, formData: FormDat
     bio,
     destination_url,
     public_page_mode,
+    landing_hero_focus: heroFocusParsed.data,
     updated_at: new Date().toISOString(),
   };
 
@@ -316,7 +330,7 @@ export async function updateLink(linkId: string, slug: string, formData: FormDat
   if (shot instanceof File && shot.size > 0) {
     const { data: existing } = await supabase
       .from("links")
-      .select("screenshot_path")
+      .select("hero_image_path")
       .eq("id", linkId)
       .eq("user_id", user.id)
       .single();
@@ -324,10 +338,10 @@ export async function updateLink(linkId: string, slug: string, formData: FormDat
     const up = await uploadHeroScreenshot(supabase, user.id, linkId, shot);
     if (!up.ok) return { error: `Screenshot upload failed: ${up.message}` };
 
-    if (existing?.screenshot_path && existing.screenshot_path !== up.path) {
-      await supabase.storage.from("screenshots").remove([existing.screenshot_path]).catch(() => undefined);
+    if (existing?.hero_image_path && existing.hero_image_path !== up.path) {
+      await supabase.storage.from("screenshots").remove([existing.hero_image_path]).catch(() => undefined);
     }
-    patch.screenshot_path = up.path;
+    patch.hero_image_path = up.path;
   }
 
   const { error } = await supabase.from("links").update(patch).eq("id", linkId).eq("user_id", user.id);
@@ -348,13 +362,16 @@ export async function deleteLink(linkId: string) {
 
   const { data: link } = await supabase
     .from("links")
-    .select("screenshot_path, landing_cards")
+    .select("screenshot_path, hero_image_path, landing_cards")
     .eq("id", linkId)
     .eq("user_id", user.id)
     .single();
 
   if (link?.screenshot_path) {
     await supabase.storage.from("screenshots").remove([link.screenshot_path]);
+  }
+  if (link?.hero_image_path) {
+    await supabase.storage.from("screenshots").remove([link.hero_image_path]).catch(() => undefined);
   }
 
   const cards = coerceLandingCards(link?.landing_cards);

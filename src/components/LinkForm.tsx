@@ -1,11 +1,13 @@
 "use client";
 
 import { createLink, updateLink, type LinkRow } from "@/app/actions/links";
+import { ImageFocusPan } from "@/components/ImageFocusPan";
 import { LandingLivePreview } from "@/components/LandingLivePreview";
 import { publicScreenshotUrl } from "@/lib/storage";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { LandingCard } from "@/lib/landing-data";
+import type { ImageFocus, LandingCard } from "@/lib/landing-data";
+import { DEFAULT_IMAGE_FOCUS } from "@/lib/landing-data";
 import { PLATFORM_OPTIONS } from "@/lib/platforms";
 
 function reindexFiles(prev: Record<number, File>, removed: number): Record<number, File> {
@@ -58,6 +60,9 @@ export function LinkForm(props: Props) {
   const [cardFiles, setCardFiles] = useState<Record<number, File>>({});
   const [cardClearImage, setCardClearImage] = useState<Record<number, boolean>>({});
   const [cardPreviewBlobs, setCardPreviewBlobs] = useState<Record<number, string>>({});
+  const [heroFocus, setHeroFocus] = useState<ImageFocus>(() =>
+    isEdit && link?.landing_hero_focus ? link.landing_hero_focus : { ...DEFAULT_IMAGE_FOCUS }
+  );
   const heroFileInputRef = useRef<HTMLInputElement>(null);
 
   const defaults = useMemo(
@@ -70,10 +75,10 @@ export function LinkForm(props: Props) {
   const previewSlug =
     isEdit && link ? link.slug : slugDraft.trim().toLowerCase() || "preview";
 
-  const savedHeroUrl = useMemo(
-    () => (link?.screenshot_path ? publicScreenshotUrl(link.screenshot_path) : null),
-    [link?.screenshot_path]
-  );
+  const savedHeroUrl = useMemo(() => {
+    const p = link?.hero_image_path ?? link?.screenshot_path;
+    return p ? publicScreenshotUrl(p) : null;
+  }, [link?.hero_image_path, link?.screenshot_path]);
 
   const previewHeroUrl = heroObjectUrl ?? savedHeroUrl;
 
@@ -161,6 +166,7 @@ export function LinkForm(props: Props) {
         locked: false,
         image_path: null,
         image_url: null,
+        image_focus: { ...DEFAULT_IMAGE_FOCUS },
       },
     ]);
   }
@@ -181,6 +187,7 @@ export function LinkForm(props: Props) {
         <input type="hidden" name="public_page_mode" value={pageMode} />
         <input type="hidden" name="social_links_json" value="[]" />
         <input type="hidden" name="follower_summary" value="" />
+        <input type="hidden" name="landing_hero_focus_json" value={JSON.stringify(heroFocus)} />
         <input type="hidden" name="landing_cards_json" value={JSON.stringify(landingCards)} />
 
         {props.mode === "create" && (
@@ -377,7 +384,7 @@ export function LinkForm(props: Props) {
                             delete n[i];
                             return n;
                           });
-                          updateCard(i, { image_path: null, image_url: null });
+                          updateCard(i, { image_path: null, image_url: null, image_focus: { ...DEFAULT_IMAGE_FOCUS } });
                         }
                       }}
                     />
@@ -391,7 +398,11 @@ export function LinkForm(props: Props) {
                             return n;
                           });
                           setCardClearImage((p) => ({ ...p, [i]: true }));
-                          updateCard(i, { image_path: null, image_url: null });
+                          updateCard(i, {
+                            image_path: null,
+                            image_url: null,
+                            image_focus: { ...DEFAULT_IMAGE_FOCUS },
+                          });
                         }}
                         className="w-fit text-xs font-medium text-red-600 hover:underline"
                       >
@@ -402,6 +413,20 @@ export function LinkForm(props: Props) {
                       <span className="text-[11px] text-zinc-500">Using saved upload. Choose a file to replace.</span>
                     )}
                   </div>
+                  <ImageFocusPan
+                    label="Card image framing"
+                    aspectClassName="aspect-[5/1] max-h-24 sm:max-h-28"
+                    imageUrl={
+                      cardClearImage[i]
+                        ? null
+                        : cardPreviewBlobs[i] ??
+                          (row.image_path ? publicScreenshotUrl(row.image_path) : null) ??
+                          row.image_url ??
+                          null
+                    }
+                    value={row.image_focus ?? DEFAULT_IMAGE_FOCUS}
+                    onChange={(next) => updateCard(i, { image_focus: next })}
+                  />
                   <div className="flex flex-wrap items-center gap-4 text-xs text-zinc-700">
                     <label className="flex items-center gap-2">
                       <input
@@ -448,7 +473,7 @@ export function LinkForm(props: Props) {
       )}
 
       <div className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-zinc-800">Hero screenshot</span>
+        <span className="text-sm font-medium text-zinc-800">Hero image</span>
         <div className="flex flex-wrap items-center gap-3">
           <input
             ref={heroFileInputRef}
@@ -459,7 +484,7 @@ export function LinkForm(props: Props) {
           />
           <button
             type="button"
-            aria-label="Choose hero screenshot image"
+            aria-label="Choose hero image"
             onClick={() => heroFileInputRef.current?.click()}
             className="cursor-pointer rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-emerald-600/20 transition hover:bg-emerald-500"
           >
@@ -471,12 +496,19 @@ export function LinkForm(props: Props) {
             </span>
           )}
         </div>
-        {isEdit && link?.screenshot_path && !file && (
+        {isEdit && (link?.hero_image_path ?? link?.screenshot_path) && !file && (
           <span className="text-xs text-zinc-500">Current image kept unless you choose a new file.</span>
         )}
         <span className="text-xs text-zinc-500">
-          Used as the large header image on landing pages; optional but recommended.
+          Shown on your public landing only — not in the dashboard screenshot panel.
         </span>
+        <ImageFocusPan
+          label="Hero framing (mobile)"
+          aspectClassName="aspect-[16/10] max-h-44"
+          imageUrl={previewHeroUrl}
+          value={heroFocus}
+          onChange={setHeroFocus}
+        />
       </div>
 
       {error && (
@@ -500,6 +532,7 @@ export function LinkForm(props: Props) {
           verified={verified}
           bio={bioLanding}
           heroUrl={previewHeroUrl}
+          heroFocus={heroFocus}
           cards={previewCards}
         />
       ) : (

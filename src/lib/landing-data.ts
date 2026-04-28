@@ -1,5 +1,24 @@
 import { normalizeHttpUrl } from "@/lib/urls";
 
+/** Percentages for CSS object-position (0–100). */
+export type ImageFocus = { x: number; y: number };
+
+export const DEFAULT_IMAGE_FOCUS: ImageFocus = { x: 50, y: 50 };
+
+export function clampFocus(f: Partial<ImageFocus> | null | undefined): ImageFocus {
+  const x = Number(f?.x);
+  const y = Number(f?.y);
+  return {
+    x: Number.isFinite(x) ? Math.min(100, Math.max(0, x)) : DEFAULT_IMAGE_FOCUS.x,
+    y: Number.isFinite(y) ? Math.min(100, Math.max(0, y)) : DEFAULT_IMAGE_FOCUS.y,
+  };
+}
+
+export function focusToObjectPosition(f: ImageFocus): string {
+  const c = clampFocus(f);
+  return `${c.x}% ${c.y}%`;
+}
+
 export type SocialLink = { platform: string; url: string };
 export type LandingCard = {
   label: string;
@@ -11,6 +30,8 @@ export type LandingCard = {
   image_path?: string | null;
   /** Legacy external image URL */
   image_url?: string | null;
+  /** Focal point for background image (object-position) */
+  image_focus?: ImageFocus | null;
   /** Editor / preview only — not persisted */
   previewBgUrl?: string | null;
 };
@@ -77,6 +98,11 @@ export function parseLandingCardsJson(raw: string): { ok: true; data: LandingCar
         image_path = p;
       }
     }
+    let image_focus: ImageFocus | null | undefined = undefined;
+    if (rec.image_focus != null && typeof rec.image_focus === "object") {
+      const o = rec.image_focus as Record<string, unknown>;
+      image_focus = clampFocus({ x: Number(o.x), y: Number(o.y) });
+    }
     out.push({
       label,
       url: urlNorm,
@@ -85,6 +111,7 @@ export function parseLandingCardsJson(raw: string): { ok: true; data: LandingCar
       locked,
       image_url: image_url ?? null,
       image_path: image_path ?? null,
+      image_focus: image_focus ?? null,
     });
   }
   return { ok: true, data: out };
@@ -106,4 +133,25 @@ export function coerceSocialLinks(raw: unknown): SocialLink[] {
 export function coerceLandingCards(raw: unknown): LandingCard[] {
   const res = parseLandingCardsJson(typeof raw === "string" ? raw : JSON.stringify(raw ?? []));
   return res.ok ? res.data : [];
+}
+
+export function parseLandingHeroFocusJson(
+  raw: string
+): { ok: true; data: ImageFocus } | { ok: false; error: string } {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw || "{}");
+  } catch {
+    return { ok: false, error: "Hero framing must be valid JSON." };
+  }
+  if (!parsed || typeof parsed !== "object") {
+    return { ok: true, data: DEFAULT_IMAGE_FOCUS };
+  }
+  const rec = parsed as Record<string, unknown>;
+  return { ok: true, data: clampFocus({ x: Number(rec.x), y: Number(rec.y) }) };
+}
+
+export function coerceLandingHeroFocus(raw: unknown): ImageFocus {
+  const res = parseLandingHeroFocusJson(typeof raw === "string" ? raw : JSON.stringify(raw ?? {}));
+  return res.ok ? res.data : DEFAULT_IMAGE_FOCUS;
 }

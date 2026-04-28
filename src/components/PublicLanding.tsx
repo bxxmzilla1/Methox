@@ -1,7 +1,7 @@
 "use client";
 
-import type { LandingCard } from "@/lib/landing-data";
-import { slugToDisplayName } from "@/lib/landing-data";
+import type { ImageFocus, LandingCard } from "@/lib/landing-data";
+import { DEFAULT_IMAGE_FOCUS, focusToObjectPosition, slugToDisplayName } from "@/lib/landing-data";
 import { cardGradientClass, type PlatformId } from "@/lib/platforms";
 import { publicScreenshotUrl } from "@/lib/storage";
 
@@ -109,6 +109,7 @@ export type PublicLandingProps = {
   verified: boolean;
   bio: string;
   heroUrl: string | null;
+  heroFocus?: ImageFocus | null;
   cards: LandingCard[];
   /** Shorter layout for dashboard live preview */
   embedded?: boolean;
@@ -123,10 +124,12 @@ export function PublicLanding({
   verified,
   bio,
   heroUrl,
+  heroFocus,
   cards,
   embedded = false,
   isPreview = false,
 }: PublicLandingProps) {
+  const heroPos = focusToObjectPosition(heroFocus ?? DEFAULT_IMAGE_FOCUS);
   const name = displayName.trim() || slugToDisplayName(slug);
   const handleText = formatHandle(handle);
   const sorted = [...cards].sort((a, b) => Number(b.featured) - Number(a.featured));
@@ -150,7 +153,12 @@ export function PublicLanding({
       >
         {heroUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={heroUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+          <img
+            src={heroUrl}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+            style={{ objectPosition: heroPos }}
+          />
         ) : (
           <div className={`absolute inset-0 ${cardGradientClass("other")}`} />
         )}
@@ -216,6 +224,7 @@ function LandingCardLink({
 }) {
   const grad = cardGradientClass(card.platform);
   const bgUrl = cardBackgroundUrl(card);
+  const cardPos = focusToObjectPosition(card.image_focus ?? DEFAULT_IMAGE_FOCUS);
   return (
     <a
       href={isPreview ? "#preview" : card.url}
@@ -226,7 +235,12 @@ function LandingCardLink({
     >
       {bgUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={bgUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <img
+          src={bgUrl}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+          style={{ objectPosition: cardPos }}
+        />
       ) : (
         <div className={`absolute inset-0 ${grad}`} />
       )}

@@ -5,7 +5,7 @@ import { VisitorTracker } from "@/components/VisitorTracker";
 import { RedirectAfterTrack } from "@/components/RedirectAfterTrack";
 import { PublicLanding } from "@/components/PublicLanding";
 import { RESERVED_SLUGS } from "@/lib/constants";
-import { coerceLandingCards, slugToDisplayName } from "@/lib/landing-data";
+import { coerceLandingCards, coerceLandingHeroFocus, slugToDisplayName } from "@/lib/landing-data";
 import { publicScreenshotUrl } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +39,7 @@ export default async function PublicLinkPage({ params }: PageProps) {
   const { data: row } = await supabase
     .from("links")
     .select(
-      "id, slug, bio, screenshot_path, destination_url, public_page_mode, display_name, handle, verified, landing_cards"
+      "id, slug, bio, screenshot_path, hero_image_path, landing_hero_focus, destination_url, public_page_mode, display_name, handle, verified, landing_cards"
     )
     .eq("slug", slug)
     .single();
@@ -64,7 +64,10 @@ export default async function PublicLinkPage({ params }: PageProps) {
     return <RedirectAfterTrack linkId={linkId} href={destinationUrl} />;
   }
 
-  const heroUrl = publicScreenshotUrl((row.screenshot_path as string | null) ?? null);
+  const heroPath =
+    (row.hero_image_path as string | null | undefined) ?? (row.screenshot_path as string | null) ?? null;
+  const heroUrl = publicScreenshotUrl(heroPath);
+  const heroFocus = coerceLandingHeroFocus(row.landing_hero_focus);
   const cards = coerceLandingCards(row.landing_cards);
 
   return (
@@ -77,6 +80,7 @@ export default async function PublicLinkPage({ params }: PageProps) {
         verified={Boolean(row.verified)}
         bio={(row.bio as string) ?? ""}
         heroUrl={heroUrl}
+        heroFocus={heroFocus}
         cards={cards}
       />
     </>

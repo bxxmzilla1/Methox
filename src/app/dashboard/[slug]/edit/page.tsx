@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { LinkForm } from "@/components/LinkForm";
 import type { LinkRow } from "@/app/actions/links";
 import { APP_NAME } from "@/lib/constants";
-import { coerceLandingCards, coerceSocialLinks } from "@/lib/landing-data";
+import { coerceLandingCards, coerceLandingHeroFocus, coerceSocialLinks } from "@/lib/landing-data";
 
 export default async function EditLinkPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug: rawSlug } = await params;
@@ -19,7 +19,7 @@ export default async function EditLinkPage({ params }: { params: Promise<{ slug:
   const { data: row } = await supabase
     .from("links")
     .select(
-      "id, user_id, slug, username, bio, screenshot_path, destination_url, public_page_mode, display_name, handle, verified, follower_summary, social_links, landing_cards, created_at, updated_at"
+      "id, user_id, slug, username, bio, screenshot_path, hero_image_path, landing_hero_focus, destination_url, public_page_mode, display_name, handle, verified, follower_summary, social_links, landing_cards, created_at, updated_at"
     )
     .eq("slug", slug)
     .eq("user_id", user.id)
@@ -34,6 +34,8 @@ export default async function EditLinkPage({ params }: { params: Promise<{ slug:
     username: row.username ?? "",
     bio: row.bio ?? "",
     screenshot_path: row.screenshot_path,
+    hero_image_path: row.hero_image_path ?? null,
+    landing_hero_focus: coerceLandingHeroFocus(row.landing_hero_focus),
     destination_url: row.destination_url,
     public_page_mode: row.public_page_mode === "redirect" ? "redirect" : "landing",
     display_name: row.display_name ?? "",

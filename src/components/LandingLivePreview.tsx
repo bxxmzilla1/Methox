@@ -1,7 +1,7 @@
 "use client";
 
 import { PublicLanding } from "@/components/PublicLanding";
-import type { LandingCard } from "@/lib/landing-data";
+import type { ImageFocus, LandingCard } from "@/lib/landing-data";
 
 type Props = {
   slug: string;
@@ -10,6 +10,7 @@ type Props = {
   verified: boolean;
   bio: string;
   heroUrl: string | null;
+  heroFocus: ImageFocus;
   cards: LandingCard[];
 };
 
@@ -20,6 +21,7 @@ export function LandingLivePreview({
   verified,
   bio,
   heroUrl,
+  heroFocus,
   cards,
 }: Props) {
   return (
@@ -39,6 +41,7 @@ export function LandingLivePreview({
             verified={verified}
             bio={bio}
             heroUrl={heroUrl}
+            heroFocus={heroFocus}
             cards={cards}
             embedded
             isPreview
