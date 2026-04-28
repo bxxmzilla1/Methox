@@ -1,4 +1,4 @@
--- METHOX: links, clicks, storage
+-- Flinky.Bio: links, clicks, storage
 -- Run this in Supabase SQL Editor or via CLI after linking the project.
 
 create table if not exists public.links (

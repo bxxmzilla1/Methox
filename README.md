@@ -1,4 +1,4 @@
-# METHOX
+# Flinky.Bio
 
 Custom-path bio pages (e.g. `https://YOUR_APP.vercel.app/example`) with visit tracking, unique visitors, country per click (on Vercel), optional screenshot, and optional destination URL.
 
@@ -15,7 +15,7 @@ From **this folder** (the repo root):
 ```bash
 git branch -M main
 git add .
-git commit -m "Initial commit: METHOX"
+git commit -m "Initial commit: Flinky.Bio"
 ```
 
 Create a new empty repository on GitHub, then:

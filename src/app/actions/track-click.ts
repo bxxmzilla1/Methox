@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { cookies, headers } from "next/headers";
 import { randomUUID } from "crypto";
 
-const VISITOR_COOKIE = "methox_vid";
+const VISITOR_COOKIE = "flinky_bio_vid";
 
 export async function recordClick(linkId: string) {
   const cookieStore = await cookies();

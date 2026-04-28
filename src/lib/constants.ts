@@ -1,4 +1,4 @@
-export const APP_NAME = "METHOX";
+export const APP_NAME = "Flinky.Bio";
 
 /** Paths that cannot be used as custom link slugs */
 export const RESERVED_SLUGS = new Set([
