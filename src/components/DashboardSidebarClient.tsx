@@ -243,6 +243,12 @@ export function DashboardSidebarClient({ links, statsByLinkId, siteBase }: Props
                 >
                   Edit landing
                 </Link>
+                <Link
+                  href={`/dashboard/${encodeURIComponent(selected.slug)}/sessions`}
+                  className="rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-50"
+                >
+                  Session recorder
+                </Link>
                 <button
                   type="button"
                   onClick={() => setPathPreviewEditorOpen(true)}
