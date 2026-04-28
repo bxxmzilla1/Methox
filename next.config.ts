@@ -8,6 +8,13 @@ const withPWA = withPWAInit({
   reloadOnOnline: true,
 });
 
-const nextConfig: NextConfig = {};
+const nextConfig: NextConfig = {
+  // Hero + card images are uploaded via Server Actions; default ~1MB rejects most phone photos
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "15mb",
+    },
+  },
+};
 
 export default withPWA(nextConfig);

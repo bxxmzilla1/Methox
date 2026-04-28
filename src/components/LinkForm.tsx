@@ -118,17 +118,18 @@ export function LinkForm(props: Props) {
     setPending(true);
     const form = e.currentTarget;
     const fd = new FormData(form);
+    const heroFromInput = heroFileInputRef.current?.files?.[0];
+    const heroFile = file ?? heroFromInput ?? null;
 
     try {
       if (props.mode === "create") {
-        if (file) fd.append("screenshot", file, file.name);
+        if (heroFile && heroFile.size > 0) fd.append("screenshot", heroFile, heroFile.name);
         Object.entries(cardFiles).forEach(([k, f]) => {
           fd.append(`card_image_${k}`, f, f.name);
         });
         const res = await createLink(fd);
         if (res.error) {
           setError(res.error);
-          setPending(false);
           return;
         }
         router.push("/dashboard");
@@ -138,18 +139,24 @@ export function LinkForm(props: Props) {
 
       if (!link) return;
 
-      if (file) fd.append("screenshot", file, file.name);
+      if (heroFile && heroFile.size > 0) fd.append("screenshot", heroFile, heroFile.name);
       Object.entries(cardFiles).forEach(([k, f]) => {
         fd.append(`card_image_${k}`, f, f.name);
       });
       const res = await updateLink(link.id, link.slug, fd);
       if (res.error) {
         setError(res.error);
-        setPending(false);
         return;
       }
       router.push("/dashboard");
       router.refresh();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(
+        /413|body.*limit|Payload Too Large/i.test(msg)
+          ? "Image is too large for one request. Try a smaller file (under ~15MB) or compress the photo."
+          : `Could not save: ${msg || "Network error"}. Try again.`
+      );
     } finally {
       setPending(false);
     }
