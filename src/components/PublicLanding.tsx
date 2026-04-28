@@ -2,8 +2,10 @@
 
 import type { ImageFocus, LandingCard } from "@/lib/landing-data";
 import { DEFAULT_IMAGE_FOCUS, focusToObjectPosition, slugToDisplayName } from "@/lib/landing-data";
+import { applyGeoPlaceholders, type ViewerGeo } from "@/lib/ipinfo";
 import { cardGradientClass, type PlatformId } from "@/lib/platforms";
 import { publicScreenshotUrl } from "@/lib/storage";
+import { useEffect, useMemo, useState } from "react";
 
 function formatHandle(raw: string): string | null {
   const t = raw.trim();
@@ -127,9 +129,33 @@ export function PublicLanding({
   embedded = false,
   isPreview = false,
 }: PublicLandingProps) {
+  const [viewerGeo, setViewerGeo] = useState<ViewerGeo | null>(null);
+
+  useEffect(() => {
+    if (embedded || isPreview) return;
+    let cancelled = false;
+    fetch("/api/viewer-geo")
+      .then((r) => r.json() as Promise<ViewerGeo>)
+      .then((data) => {
+        if (cancelled) return;
+        if (data.country || data.city) setViewerGeo(data);
+        else setViewerGeo(null);
+      })
+      .catch(() => {
+        if (!cancelled) setViewerGeo(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [embedded, isPreview]);
+
   const heroPos = focusToObjectPosition(heroFocus ?? DEFAULT_IMAGE_FOCUS);
   const name = displayName.trim() || slugToDisplayName(slug);
   const handleText = formatHandle(handle);
+  const bioResolved = useMemo(
+    () => applyGeoPlaceholders(bio.trim(), viewerGeo),
+    [bio, viewerGeo]
+  );
   // Order is list order: first card is always the taller “featured” bar (no UI toggle).
   const top = cards[0];
   const rest = cards.slice(1);
@@ -190,7 +216,7 @@ export function PublicLanding({
             <p
               className={`max-w-prose whitespace-pre-wrap leading-relaxed text-zinc-200 ${embedded ? "mt-4 text-base" : "mt-5 text-base sm:text-lg"}`}
             >
-              {bio.trim()}
+              {bioResolved}
             </p>
           )}
         </div>
