@@ -4,7 +4,7 @@ import { createLink, updateLink, type LinkRow } from "@/app/actions/links";
 import { LandingLivePreview } from "@/components/LandingLivePreview";
 import { publicScreenshotUrl } from "@/lib/storage";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { LandingCard } from "@/lib/landing-data";
 import { PLATFORM_OPTIONS } from "@/lib/platforms";
 
@@ -58,6 +58,7 @@ export function LinkForm(props: Props) {
   const [cardFiles, setCardFiles] = useState<Record<number, File>>({});
   const [cardClearImage, setCardClearImage] = useState<Record<number, boolean>>({});
   const [cardPreviewBlobs, setCardPreviewBlobs] = useState<Record<number, string>>({});
+  const heroFileInputRef = useRef<HTMLInputElement>(null);
 
   const defaults = useMemo(
     () => ({
@@ -446,21 +447,37 @@ export function LinkForm(props: Props) {
         </label>
       )}
 
-      <label className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-1.5">
         <span className="text-sm font-medium text-zinc-800">Hero screenshot</span>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          className="text-sm text-zinc-600 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-emerald-600 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white file:shadow-sm hover:file:bg-emerald-500"
-        />
+        <div className="flex flex-wrap items-center gap-3">
+          <input
+            ref={heroFileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          />
+          <button
+            type="button"
+            aria-label="Choose hero screenshot image"
+            onClick={() => heroFileInputRef.current?.click()}
+            className="cursor-pointer rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-emerald-600/20 transition hover:bg-emerald-500"
+          >
+            Choose file
+          </button>
+          {file && (
+            <span className="max-w-[min(100%,18rem)] truncate text-xs text-zinc-600" title={file.name}>
+              {file.name}
+            </span>
+          )}
+        </div>
         {isEdit && link?.screenshot_path && !file && (
           <span className="text-xs text-zinc-500">Current image kept unless you choose a new file.</span>
         )}
         <span className="text-xs text-zinc-500">
           Used as the large header image on landing pages; optional but recommended.
         </span>
-      </label>
+      </div>
 
       {error && (
         <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>
