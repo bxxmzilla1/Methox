@@ -40,9 +40,13 @@ export function SessionRecorderClient({ linkId, enabled }: Props) {
   }
 
   async function sendChunk(opts?: { keepalive?: boolean }) {
-    if (!sessionIdRef.current) return;
     const events = bufferRef.current;
     if (!events.length) return;
+    if (!sessionIdRef.current) {
+      // Session not ready yet — keep buffering and retry soon.
+      scheduleFlush();
+      return;
+    }
     bufferRef.current = [];
     const seq = seqRef.current++;
 
@@ -83,7 +87,7 @@ export function SessionRecorderClient({ linkId, enabled }: Props) {
     flushTimer.current = window.setTimeout(() => {
       flushTimer.current = null;
       void sendChunk();
-    }, 5000);
+    }, 2000);
   }
 
   useEffect(() => {
@@ -95,10 +99,7 @@ export function SessionRecorderClient({ linkId, enabled }: Props) {
     let cancelled = false;
 
     (async () => {
-      const sid = await startSession();
-      if (cancelled || !sid) return;
-      sessionIdRef.current = sid;
-
+      // Start recording immediately (buffering events locally), then start the session and flush.
       const rrweb = await import("rrweb");
       if (cancelled) return;
 
@@ -112,6 +113,11 @@ export function SessionRecorderClient({ linkId, enabled }: Props) {
           scheduleFlush();
         },
       });
+
+      const sid = await startSession();
+      if (cancelled || !sid) return;
+      sessionIdRef.current = sid;
+      void sendChunk(); // flush buffered events as soon as session exists
     })();
 
     function onHide() {
