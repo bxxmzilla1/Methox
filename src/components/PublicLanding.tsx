@@ -304,14 +304,16 @@ function LandingCardLink({
         >
           {card.label}
         </span>
-        {card.locked && card.locked_hint ? (
+      </div>
+      {card.locked && card.locked_hint ? (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-16 text-center">
           <span
-            className={`mt-1.5 line-clamp-3 text-left font-semibold tracking-tight text-white/90 ${isPreview ? "text-sm" : "text-sm sm:text-base"}`}
+            className={`rounded-full bg-black/35 px-3 py-1 text-[11px] font-semibold tracking-wide text-white/85 ring-1 ring-white/15 backdrop-blur-sm ${isPreview ? "" : "sm:text-xs"}`}
           >
             {card.locked_hint_text?.trim() || DEFAULT_LOCKED_HINT_TEXT}
           </span>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
       <div
         className={
           isPreview
