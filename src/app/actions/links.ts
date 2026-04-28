@@ -12,7 +12,7 @@ import {
   type LandingCard,
   type SocialLink,
 } from "@/lib/landing-data";
-import { uploadHeroScreenshot, uploadLinkCardImage } from "@/lib/storage-upload";
+import { uploadDashboardScreenshot, uploadHeroScreenshot, uploadLinkCardImage } from "@/lib/storage-upload";
 import { normalizeHttpUrl } from "@/lib/urls";
 
 export type LinkRow = {
@@ -351,6 +351,82 @@ export async function updateLink(linkId: string, slug: string, formData: FormDat
   revalidatePath("/dashboard");
   revalidatePath(`/${slug}`);
   return { ok: true };
+}
+
+/** Dashboard only: slug (public path), bio, and dashboard preview image (`screenshot_path`). Does not touch landing/hero. */
+export async function updateDashboardLinkProfile(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sign in required." };
+
+  const linkId = String(formData.get("link_id") ?? "").trim();
+  const currentSlug = String(formData.get("current_slug") ?? "").trim().toLowerCase();
+  const newSlug = String(formData.get("slug") ?? "").trim().toLowerCase();
+  const bio = String(formData.get("bio") ?? "");
+
+  if (!linkId || !currentSlug) return { error: "Missing link." };
+
+  if (!isValidSlug(newSlug)) {
+    return { error: "Path must be 2–64 chars: lowercase letters, numbers, single hyphens." };
+  }
+
+  const { data: row, error: fetchErr } = await supabase
+    .from("links")
+    .select("id, slug, screenshot_path")
+    .eq("id", linkId)
+    .eq("user_id", user.id)
+    .single();
+
+  if (fetchErr || !row) return { error: "Link not found." };
+  if (String(row.slug).toLowerCase() !== currentSlug) {
+    return { error: "This page is out of date. Refresh and try again." };
+  }
+
+  const patch: Record<string, unknown> = {
+    bio,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (newSlug !== row.slug) {
+    patch.slug = newSlug;
+  }
+
+  const dashFile = formData.get("dashboard_screenshot");
+  const clearing = formData.get("clear_dashboard_screenshot") === "1";
+
+  if (clearing && !(dashFile instanceof File && dashFile.size > 0)) {
+    const sp = row.screenshot_path as string | null;
+    if (sp) {
+      await supabase.storage.from("screenshots").remove([sp]).catch(() => undefined);
+    }
+    patch.screenshot_path = null;
+  }
+
+  if (dashFile instanceof File && dashFile.size > 0) {
+    const up = await uploadDashboardScreenshot(supabase, user.id, linkId, dashFile);
+    if (!up.ok) return { error: `Dashboard image: ${up.message}` };
+    const oldSp = row.screenshot_path as string | null;
+    if (oldSp && oldSp !== up.path) {
+      await supabase.storage.from("screenshots").remove([oldSp]).catch(() => undefined);
+    }
+    patch.screenshot_path = up.path;
+  }
+
+  const { error: upErr } = await supabase.from("links").update(patch).eq("id", linkId).eq("user_id", user.id);
+
+  if (upErr) {
+    if (upErr.code === "23505") return { error: "That path is already taken." };
+    return { error: upErr.message };
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath(`/${currentSlug}`);
+  if (newSlug !== currentSlug) {
+    revalidatePath(`/${newSlug}`);
+  }
+  return { ok: true as const, slug: newSlug };
 }
 
 export async function deleteLink(linkId: string) {
