@@ -240,7 +240,7 @@ export function PublicLanding({
                 className={
                   embedded
                     ? "h-20 w-full"
-                    : "h-[5.25rem] w-full sm:h-24"
+                    : "h-[6.25rem] w-full sm:h-28"
                 }
                 isPreview={isPreview}
               />
@@ -249,7 +249,7 @@ export function PublicLanding({
               <LandingCardLink
                 key={`${card.url}-${i}`}
                 card={card}
-                className={embedded ? "h-[4.75rem] w-full" : "h-[4.75rem] w-full sm:h-[5.25rem]"}
+                className={embedded ? "h-[5.25rem] w-full" : "h-[5.25rem] w-full sm:h-[6rem]"}
                 isPreview={isPreview}
               />
             ))}
