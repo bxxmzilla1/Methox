@@ -1,5 +1,6 @@
 "use client";
 
+import { record } from "rrweb";
 import { useEffect, useMemo, useRef } from "react";
 
 type StartRes = { sessionId: string } | { error: string };
@@ -98,36 +99,32 @@ export function SessionRecorderClient({ linkId, enabled }: Props) {
     let stop: undefined | (() => void) = undefined;
     let cancelled = false;
 
-    (async () => {
-      // Start recording immediately (buffering events locally), then start the session and flush.
-      const rrweb = await import("rrweb");
-      if (cancelled) return;
+    // Start recording immediately (buffering events locally), then start the session and flush.
+    stop = record({
+      // Better mobile coverage: rrweb treats touchmove similar to mousemove.
+      // Keep sampling reasonable to avoid huge payloads on slower mobile networks.
+      sampling: {
+        mousemove: 80,
+        scroll: 150,
+        mouseInteraction: true,
+        input: "all",
+      },
+      recordCanvas: true,
+      emit(event) {
+        bufferRef.current.push(event as unknown);
+        if (bufferRef.current.length >= 60) {
+          void sendChunk();
+          return;
+        }
+        scheduleFlush();
+      },
+    });
 
-      stop = rrweb.record({
-        // Better mobile coverage: rrweb treats touchmove similar to mousemove.
-        // Keep sampling reasonable to avoid huge payloads on slower mobile networks.
-        sampling: {
-          mousemove: 80,
-          scroll: 150,
-          mouseInteraction: true,
-          input: "all",
-        },
-        recordCanvas: true,
-        emit(event) {
-          bufferRef.current.push(event as unknown);
-          if (bufferRef.current.length >= 60) {
-            void sendChunk();
-            return;
-          }
-          scheduleFlush();
-        },
-      });
-
-      const sid = await startSession();
+    void startSession().then((sid) => {
       if (cancelled || !sid) return;
       sessionIdRef.current = sid;
       void sendChunk(); // flush buffered events as soon as session exists
-    })();
+    });
 
     function onHide() {
       void sendChunk({ keepalive: true });
