@@ -104,6 +104,15 @@ export function SessionRecorderClient({ linkId, enabled }: Props) {
       if (cancelled) return;
 
       stop = rrweb.record({
+        // Better mobile coverage: rrweb treats touchmove similar to mousemove.
+        // Keep sampling reasonable to avoid huge payloads on slower mobile networks.
+        sampling: {
+          mousemove: 80,
+          scroll: 150,
+          mouseInteraction: true,
+          input: "all",
+        },
+        recordCanvas: true,
         emit(event) {
           bufferRef.current.push(event as unknown);
           if (bufferRef.current.length >= 60) {
