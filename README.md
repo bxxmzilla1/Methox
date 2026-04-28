@@ -97,6 +97,12 @@ Then try **Create link** again (no app redeploy required).
 - **Vercel:** If **Deployment Protection** (password / SSO) is on, unauthenticated fetches (including the PWA manifest) can get 401. Turn protection off for this project, or use a setup that allows public access to the site.
 - After pulling the latest code, the middleware matcher also skips `manifest.webmanifest` and `sw.js` so session refresh does not run on those URLs.
 
+### Hero screenshot upload shows **HTTP 400** / **InvalidMimeType**
+
+- The app uploads from a **server action** with a normalized `Content-Type` (your browser may send an empty or invalid type for some JPEGs).
+- In Supabase **Storage → Screenshots bucket**, avoid restricting allowed MIME types to a list that excludes `image/jpeg` / `image/png`.
+- If uploads still fail with a policy error, run `supabase/migrations/20260428120000_storage_rls_path.sql` so folder checks use `split_part(name, '/', 1)`.
+
 ---
 
 ## CI

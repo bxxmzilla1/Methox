@@ -1,3 +1,5 @@
+"use client";
+
 import type { LandingCard, SocialLink } from "@/lib/landing-data";
 import { slugToDisplayName } from "@/lib/landing-data";
 import { cardGradientClass, platformLabel, type PlatformId } from "@/lib/platforms";
@@ -102,6 +104,10 @@ export type PublicLandingProps = {
   heroUrl: string | null;
   socialLinks: SocialLink[];
   cards: LandingCard[];
+  /** Shorter layout for dashboard live preview */
+  embedded?: boolean;
+  /** Block navigation (editor preview) */
+  isPreview?: boolean;
 };
 
 export function PublicLanding({
@@ -114,6 +120,8 @@ export function PublicLanding({
   heroUrl,
   socialLinks,
   cards,
+  embedded = false,
+  isPreview = false,
 }: PublicLandingProps) {
   const name = displayName.trim() || slugToDisplayName(slug);
   const handleText = formatHandle(handle);
@@ -122,8 +130,20 @@ export function PublicLanding({
   const rest = top ? sorted.filter((c) => c !== top) : sorted;
 
   return (
-    <div className="min-h-[100dvh] bg-zinc-950 text-white">
-      <div className="relative h-[min(42vh,420px)] w-full overflow-hidden bg-zinc-900">
+    <div
+      className={
+        embedded
+          ? "min-h-0 rounded-b-[inherit] bg-zinc-950 text-white"
+          : "min-h-[100dvh] bg-zinc-950 text-white"
+      }
+    >
+      <div
+        className={
+          embedded
+            ? "relative h-[min(36vh,300px)] w-full overflow-hidden bg-zinc-900"
+            : "relative h-[min(42vh,420px)] w-full overflow-hidden bg-zinc-900"
+        }
+      >
         {heroUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={heroUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
@@ -155,9 +175,10 @@ export function PublicLanding({
               {socialLinks.map((s, i) => (
                 <a
                   key={`${s.platform}-${i}`}
-                  href={s.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href={isPreview ? "#preview" : s.url}
+                  target={isPreview ? undefined : "_blank"}
+                  rel={isPreview ? undefined : "noopener noreferrer"}
+                  onClick={isPreview ? (e) => e.preventDefault() : undefined}
                   className="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-800/90 ring-1 ring-white/10 transition hover:bg-zinc-700"
                   aria-label={platformLabel(s.platform)}
                 >
@@ -181,10 +202,19 @@ export function PublicLanding({
         {sorted.length > 0 && (
           <div className="mx-auto mt-10 grid max-w-md grid-cols-2 gap-3 px-1">
             {top && (
-              <LandingCardLink card={top} className="col-span-2 aspect-[16/10] sm:aspect-[2/1]" />
+              <LandingCardLink
+                card={top}
+                className="col-span-2 aspect-[16/10] sm:aspect-[2/1]"
+                isPreview={isPreview}
+              />
             )}
             {rest.map((card, i) => (
-              <LandingCardLink key={`${card.url}-${i}`} card={card} className="aspect-square" />
+              <LandingCardLink
+                key={`${card.url}-${i}`}
+                card={card}
+                className="aspect-square"
+                isPreview={isPreview}
+              />
             ))}
           </div>
         )}
@@ -193,13 +223,22 @@ export function PublicLanding({
   );
 }
 
-function LandingCardLink({ card, className }: { card: LandingCard; className: string }) {
+function LandingCardLink({
+  card,
+  className,
+  isPreview,
+}: {
+  card: LandingCard;
+  className: string;
+  isPreview?: boolean;
+}) {
   const grad = cardGradientClass(card.platform);
   return (
     <a
-      href={card.url}
-      target="_blank"
-      rel="noopener noreferrer"
+      href={isPreview ? "#preview" : card.url}
+      target={isPreview ? undefined : "_blank"}
+      rel={isPreview ? undefined : "noopener noreferrer"}
+      onClick={isPreview ? (e) => e.preventDefault() : undefined}
       className={`group relative overflow-hidden rounded-3xl ring-1 ring-white/10 ${className}`}
     >
       {card.image_url ? (

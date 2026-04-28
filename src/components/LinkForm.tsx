@@ -1,9 +1,10 @@
 "use client";
 
 import { createLink, updateLink, type LinkRow } from "@/app/actions/links";
-import { createClient } from "@/lib/supabase/client";
+import { LandingLivePreview } from "@/components/LandingLivePreview";
+import { publicScreenshotUrl } from "@/lib/storage";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { LandingCard, SocialLink } from "@/lib/landing-data";
 import { PLATFORM_OPTIONS } from "@/lib/platforms";
 
@@ -29,15 +30,40 @@ export function LinkForm(props: Props) {
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>(() => link?.social_links ?? []);
   const [landingCards, setLandingCards] = useState<LandingCard[]>(() => link?.landing_cards ?? []);
 
+  const [slugDraft, setSlugDraft] = useState("");
+  const [displayName, setDisplayName] = useState(() => link?.display_name ?? "");
+  const [handle, setHandle] = useState(() => link?.handle ?? "");
+  const [followerSummary, setFollowerSummary] = useState(() => link?.follower_summary ?? "");
+  const [bioLanding, setBioLanding] = useState(() => link?.bio ?? "");
+  const [verified, setVerified] = useState(() => link?.verified ?? false);
+  const [heroObjectUrl, setHeroObjectUrl] = useState<string | null>(null);
+
   const defaults = useMemo(
     () => ({
-      display_name: link?.display_name ?? "",
-      handle: link?.handle ?? "",
-      follower_summary: link?.follower_summary ?? "",
       destination_url: link?.destination_url ?? "",
     }),
     [link]
   );
+
+  const previewSlug =
+    isEdit && link ? link.slug : slugDraft.trim().toLowerCase() || "preview";
+
+  const savedHeroUrl = useMemo(
+    () => (link?.screenshot_path ? publicScreenshotUrl(link.screenshot_path) : null),
+    [link?.screenshot_path]
+  );
+
+  const previewHeroUrl = heroObjectUrl ?? savedHeroUrl;
+
+  useEffect(() => {
+    if (!file) {
+      setHeroObjectUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setHeroObjectUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -48,41 +74,12 @@ export function LinkForm(props: Props) {
 
     try {
       if (props.mode === "create") {
+        if (file) fd.append("screenshot", file, file.name);
         const res = await createLink(fd);
         if (res.error) {
           setError(res.error);
           setPending(false);
           return;
-        }
-        const newId = res.data?.id;
-        const slug = res.data?.slug;
-        if (file && newId && slug) {
-          const supabase = createClient();
-          const {
-            data: { user },
-          } = await supabase.auth.getUser();
-          if (!user) {
-            setError("Session expired.");
-            setPending(false);
-            return;
-          }
-          const ext = file.name.split(".").pop() || "png";
-          const path = `${user.id}/${newId}.${ext}`;
-          const { error: upErr } = await supabase.storage.from("screenshots").upload(path, file, {
-            upsert: true,
-            contentType: file.type || undefined,
-          });
-          if (upErr) {
-            setError(upErr.message);
-            setPending(false);
-            return;
-          }
-          const upd = await updateLink(newId, slug, fd, path);
-          if (upd.error) {
-            setError(upd.error);
-            setPending(false);
-            return;
-          }
         }
         router.push("/dashboard");
         router.refresh();
@@ -91,35 +88,8 @@ export function LinkForm(props: Props) {
 
       if (!link) return;
 
-      let screenshotPath: string | null | undefined = undefined;
-      if (file) {
-        const supabase = createClient();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (!user) {
-          setError("Session expired.");
-          setPending(false);
-          return;
-        }
-        const ext = file.name.split(".").pop() || "png";
-        const path = `${user.id}/${link.id}.${ext}`;
-        if (link.screenshot_path && link.screenshot_path !== path) {
-          await supabase.storage.from("screenshots").remove([link.screenshot_path]);
-        }
-        const { error: upErr } = await supabase.storage.from("screenshots").upload(path, file, {
-          upsert: true,
-          contentType: file.type || undefined,
-        });
-        if (upErr) {
-          setError(upErr.message);
-          setPending(false);
-          return;
-        }
-        screenshotPath = path;
-      }
-
-      const res = await updateLink(link.id, link.slug, fd, screenshotPath);
+      if (file) fd.append("screenshot", file, file.name);
+      const res = await updateLink(link.id, link.slug, fd);
       if (res.error) {
         setError(res.error);
         setPending(false);
@@ -160,31 +130,37 @@ export function LinkForm(props: Props) {
   }
 
   return (
-    <form onSubmit={(e) => void onSubmit(e)} className="flex max-w-lg flex-col gap-5">
-      <input type="hidden" name="public_page_mode" value={pageMode} />
-      <input type="hidden" name="social_links_json" value={JSON.stringify(socialLinks)} />
-      <input type="hidden" name="landing_cards_json" value={JSON.stringify(landingCards)} />
+    <div className="grid w-full gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(280px,400px)] lg:items-start lg:gap-12">
+      <form onSubmit={(e) => void onSubmit(e)} className="flex min-w-0 max-w-lg flex-col gap-5">
+        <input type="hidden" name="public_page_mode" value={pageMode} />
+        <input type="hidden" name="social_links_json" value={JSON.stringify(socialLinks)} />
+        <input type="hidden" name="landing_cards_json" value={JSON.stringify(landingCards)} />
 
-      {props.mode === "create" && (
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-zinc-800">Username</span>
-          <div
-            className={`flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50/50 px-3 py-2.5 ring-emerald-500/0 transition focus-within:border-emerald-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-emerald-500/20`}
-          >
-            <span className="shrink-0 text-zinc-400">/</span>
-            <input
-              name="slug"
-              required
-              placeholder="your-handle"
-              className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-zinc-400"
-              autoComplete="off"
-            />
-          </div>
-          <span className="text-xs text-zinc-500">
-            Your public page will be at <code className="rounded bg-zinc-100 px-1 py-0.5 text-zinc-700">/your-handle</code>
-          </span>
-        </label>
-      )}
+        {props.mode === "create" && (
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium text-zinc-800">Username</span>
+            <div
+              className={`flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50/50 px-3 py-2.5 ring-emerald-500/0 transition focus-within:border-emerald-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-emerald-500/20`}
+            >
+              <span className="shrink-0 text-zinc-400">/</span>
+              <input
+                name="slug"
+                required
+                value={slugDraft}
+                onChange={(e) => setSlugDraft(e.target.value)}
+                placeholder="your-handle"
+                className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-zinc-400"
+                autoComplete="off"
+              />
+            </div>
+            <span className="text-xs text-zinc-500">
+              Your public page will be at{" "}
+              <code className="rounded bg-zinc-100 px-1 py-0.5 text-zinc-700">
+                /{slugDraft.trim() || "your-handle"}
+              </code>
+            </span>
+          </label>
+        )}
 
       <fieldset className="flex flex-col gap-2 rounded-2xl border border-zinc-200/90 bg-zinc-50/40 p-4">
         <legend className="px-1 text-sm font-medium text-zinc-800">Visitor experience</legend>
@@ -240,7 +216,8 @@ export function LinkForm(props: Props) {
             <span className="text-sm font-medium text-zinc-800">Display name</span>
             <input
               name="display_name"
-              defaultValue={defaults.display_name}
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Shown as the main title"
               className={inputClass}
             />
@@ -250,14 +227,21 @@ export function LinkForm(props: Props) {
             <span className="text-sm font-medium text-zinc-800">Handle</span>
             <input
               name="handle"
-              defaultValue={defaults.handle}
+              value={handle}
+              onChange={(e) => setHandle(e.target.value)}
               placeholder="yourhandle (shown as @yourhandle)"
               className={inputClass}
             />
           </label>
 
           <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-800">
-            <input type="checkbox" name="verified" defaultChecked={link?.verified ?? false} className="rounded border-zinc-300 text-emerald-600" />
+            <input
+              type="checkbox"
+              name="verified"
+              checked={verified}
+              onChange={(e) => setVerified(e.target.checked)}
+              className="rounded border-zinc-300 text-emerald-600"
+            />
             Show verified badge
           </label>
 
@@ -265,7 +249,8 @@ export function LinkForm(props: Props) {
             <span className="text-sm font-medium text-zinc-800">Follower summary (optional)</span>
             <input
               name="follower_summary"
-              defaultValue={defaults.follower_summary}
+              value={followerSummary}
+              onChange={(e) => setFollowerSummary(e.target.value)}
               placeholder="e.g. 35.3M Total Followers"
               className={inputClass}
             />
@@ -276,7 +261,8 @@ export function LinkForm(props: Props) {
             <textarea
               name="bio"
               rows={5}
-              defaultValue={link?.bio ?? ""}
+              value={bioLanding}
+              onChange={(e) => setBioLanding(e.target.value)}
               placeholder="Lines, emojis, and short links welcome."
               className={`${inputClass} resize-y`}
             />
@@ -464,13 +450,36 @@ export function LinkForm(props: Props) {
         <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>
       )}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-xl bg-emerald-600 px-4 py-3 font-medium text-white shadow-md shadow-emerald-600/20 transition hover:bg-emerald-500 disabled:opacity-50"
-      >
-        {pending ? "Saving…" : isEdit ? "Save changes" : "Create link"}
-      </button>
-    </form>
+        <button
+          type="submit"
+          disabled={pending}
+          className="rounded-xl bg-emerald-600 px-4 py-3 font-medium text-white shadow-md shadow-emerald-600/20 transition hover:bg-emerald-500 disabled:opacity-50"
+        >
+          {pending ? "Saving…" : isEdit ? "Save changes" : "Create link"}
+        </button>
+      </form>
+
+      {pageMode === "landing" ? (
+        <LandingLivePreview
+          slug={previewSlug}
+          displayName={displayName}
+          handle={handle}
+          verified={verified}
+          followerSummary={followerSummary}
+          bio={bioLanding}
+          heroUrl={previewHeroUrl}
+          socialLinks={socialLinks}
+          cards={landingCards}
+        />
+      ) : (
+        <aside className="flex flex-col gap-3 rounded-2xl border border-dashed border-zinc-200 bg-zinc-50/60 p-6 text-sm text-zinc-600 lg:sticky lg:top-6">
+          <p className="font-medium text-zinc-800">Live preview</p>
+          <p>
+            Switch <strong>Visitor experience</strong> to <strong>Landing page</strong> to see your public layout update
+            here as you edit.
+          </p>
+        </aside>
+      )}
+    </div>
   );
 }

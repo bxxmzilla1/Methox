@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isValidSlug } from "@/lib/constants";
 import { revalidatePath } from "next/cache";
 import { parseLandingCardsJson, parseSocialLinksJson, type LandingCard, type SocialLink } from "@/lib/landing-data";
+import { uploadHeroScreenshot } from "@/lib/storage-upload";
 import { normalizeHttpUrl } from "@/lib/urls";
 
 export type LinkRow = {
@@ -100,16 +101,30 @@ export async function createLink(formData: FormData) {
     return { error: error.message };
   }
 
+  const shot = formData.get("screenshot");
+  if (shot instanceof File && shot.size > 0) {
+    const up = await uploadHeroScreenshot(supabase, user.id, data.id, shot);
+    if (!up.ok) {
+      await supabase.from("links").delete().eq("id", data.id).eq("user_id", user.id);
+      return { error: `Screenshot upload failed: ${up.message}` };
+    }
+    const { error: pathErr } = await supabase
+      .from("links")
+      .update({ screenshot_path: up.path, updated_at: new Date().toISOString() })
+      .eq("id", data.id)
+      .eq("user_id", user.id);
+    if (pathErr) {
+      await supabase.storage.from("screenshots").remove([up.path]).catch(() => undefined);
+      await supabase.from("links").delete().eq("id", data.id).eq("user_id", user.id);
+      return { error: pathErr.message };
+    }
+  }
+
   revalidatePath("/dashboard");
   return { data };
 }
 
-export async function updateLink(
-  linkId: string,
-  slug: string,
-  formData: FormData,
-  screenshotPath: string | null | undefined
-) {
+export async function updateLink(linkId: string, slug: string, formData: FormData) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -153,8 +168,22 @@ export async function updateLink(
     patch.landing_cards = payload.landing_cards;
   }
 
-  if (screenshotPath !== undefined) {
-    patch.screenshot_path = screenshotPath;
+  const shot = formData.get("screenshot");
+  if (shot instanceof File && shot.size > 0) {
+    const { data: existing } = await supabase
+      .from("links")
+      .select("screenshot_path")
+      .eq("id", linkId)
+      .eq("user_id", user.id)
+      .single();
+
+    const up = await uploadHeroScreenshot(supabase, user.id, linkId, shot);
+    if (!up.ok) return { error: `Screenshot upload failed: ${up.message}` };
+
+    if (existing?.screenshot_path && existing.screenshot_path !== up.path) {
+      await supabase.storage.from("screenshots").remove([existing.screenshot_path]).catch(() => undefined);
+    }
+    patch.screenshot_path = up.path;
   }
 
   const { error } = await supabase.from("links").update(patch).eq("id", linkId).eq("user_id", user.id);

@@ -12,7 +12,7 @@ export default async function NewLinkPage() {
   if (!user) redirect("/login");
 
   return (
-    <div className="mx-auto min-h-full max-w-2xl px-6 py-10">
+    <div className="mx-auto min-h-full max-w-6xl px-4 py-10 sm:px-6">
       <Link
         href="/dashboard"
         className="text-sm font-medium text-emerald-600 transition hover:text-emerald-700"
