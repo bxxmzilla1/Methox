@@ -94,6 +94,13 @@ export function LinkForm(props: Props) {
   }, [file]);
 
   useEffect(() => {
+    if (pageMode === "redirect") {
+      setFile(null);
+      if (heroFileInputRef.current) heroFileInputRef.current.value = "";
+    }
+  }, [pageMode]);
+
+  useEffect(() => {
     const urls: Record<number, string> = {};
     Object.entries(cardFiles).forEach(([k, f]) => {
       urls[Number(k)] = URL.createObjectURL(f);
@@ -256,20 +263,23 @@ export function LinkForm(props: Props) {
       </fieldset>
 
       {pageMode === "redirect" && (
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-zinc-800">Destination URL</span>
-          <input
-            name="destination_url"
-            type="text"
-            inputMode="url"
-            autoComplete="url"
-            required={pageMode === "redirect"}
-            defaultValue={defaults.destination_url}
-            placeholder="https://example.com or your-store.com"
-            className={inputClass}
-          />
-          <span className="text-xs text-zinc-500">Must include a valid http(s) address.</span>
-        </label>
+        <>
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium text-zinc-800">Destination URL</span>
+            <input
+              name="destination_url"
+              type="text"
+              inputMode="url"
+              autoComplete="url"
+              required={pageMode === "redirect"}
+              defaultValue={defaults.destination_url}
+              placeholder="https://example.com or your-store.com"
+              className={inputClass}
+            />
+            <span className="text-xs text-zinc-500">Must include a valid http(s) address.</span>
+          </label>
+          <input type="hidden" name="bio" value={isEdit && link ? link.bio : ""} />
+        </>
       )}
 
       {pageMode === "landing" && (
@@ -452,57 +462,46 @@ export function LinkForm(props: Props) {
         </>
       )}
 
-      {pageMode === "redirect" && (
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-zinc-800">Bio (optional)</span>
-          <textarea
-            name="bio"
-            rows={4}
-            defaultValue={link?.bio ?? ""}
-            placeholder="Not shown in redirect mode — stored for later if you switch to landing."
-            className={`${inputClass} resize-y`}
-          />
-        </label>
-      )}
-
-      <div className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-zinc-800">Hero image</span>
-        <div className="flex flex-wrap items-center gap-3">
-          <input
-            ref={heroFileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          />
-          <button
-            type="button"
-            aria-label="Choose hero image"
-            onClick={() => heroFileInputRef.current?.click()}
-            className="cursor-pointer rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-emerald-600/20 transition hover:bg-emerald-500"
-          >
-            Choose file
-          </button>
-          {file && (
-            <span className="max-w-[min(100%,18rem)] truncate text-xs text-zinc-600" title={file.name}>
-              {file.name}
-            </span>
+      {pageMode === "landing" && (
+        <div className="flex flex-col gap-1.5">
+          <span className="text-sm font-medium text-zinc-800">Hero image</span>
+          <div className="flex flex-wrap items-center gap-3">
+            <input
+              ref={heroFileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            />
+            <button
+              type="button"
+              aria-label="Choose hero image"
+              onClick={() => heroFileInputRef.current?.click()}
+              className="cursor-pointer rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-emerald-600/20 transition hover:bg-emerald-500"
+            >
+              Choose file
+            </button>
+            {file && (
+              <span className="max-w-[min(100%,18rem)] truncate text-xs text-zinc-600" title={file.name}>
+                {file.name}
+              </span>
+            )}
+          </div>
+          {isEdit && (link?.hero_image_path ?? link?.screenshot_path) && !file && (
+            <span className="text-xs text-zinc-500">Current image kept unless you choose a new file.</span>
           )}
+          <span className="text-xs text-zinc-500">
+            Shown on your public landing only — not in the dashboard screenshot panel.
+          </span>
+          <ImageFocusPan
+            label="Hero framing (mobile)"
+            aspectClassName="aspect-[16/10] max-h-44"
+            imageUrl={previewHeroUrl}
+            value={heroFocus}
+            onChange={setHeroFocus}
+          />
         </div>
-        {isEdit && (link?.hero_image_path ?? link?.screenshot_path) && !file && (
-          <span className="text-xs text-zinc-500">Current image kept unless you choose a new file.</span>
-        )}
-        <span className="text-xs text-zinc-500">
-          Shown on your public landing only — not in the dashboard screenshot panel.
-        </span>
-        <ImageFocusPan
-          label="Hero framing (mobile)"
-          aspectClassName="aspect-[16/10] max-h-44"
-          imageUrl={previewHeroUrl}
-          value={heroFocus}
-          onChange={setHeroFocus}
-        />
-      </div>
+      )}
 
       {error && (
         <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>
