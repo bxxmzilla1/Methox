@@ -1,3 +1,5 @@
+"use client";
+
 import { countryCodeToDisplayName } from "@/lib/country";
 
 type Item = { code: string; count: number };
