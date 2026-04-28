@@ -174,11 +174,11 @@ export function PublicLanding({
         </div>
 
         {sorted.length > 0 && (
-          <div className="mx-auto mt-10 grid max-w-md grid-cols-2 gap-3 px-1">
+          <div className="mx-auto mt-10 grid max-w-md grid-cols-1 gap-2.5 px-1">
             {top && (
               <LandingCardLink
                 card={top}
-                className="col-span-2 aspect-[16/10] sm:aspect-[2/1]"
+                className="h-[4.25rem] w-full sm:h-[4.75rem]"
                 isPreview={isPreview}
               />
             )}
@@ -186,7 +186,7 @@ export function PublicLanding({
               <LandingCardLink
                 key={`${card.url}-${i}`}
                 card={card}
-                className="aspect-square"
+                className="h-16 w-full sm:h-[4.25rem]"
                 isPreview={isPreview}
               />
             ))}
@@ -213,7 +213,7 @@ function LandingCardLink({
       target={isPreview ? undefined : "_blank"}
       rel={isPreview ? undefined : "noopener noreferrer"}
       onClick={isPreview ? (e) => e.preventDefault() : undefined}
-      className={`group relative overflow-hidden rounded-3xl ring-1 ring-white/10 ${className}`}
+      className={`group relative block overflow-hidden rounded-2xl ring-1 ring-white/10 ${className}`}
     >
       {card.image_url ? (
         // eslint-disable-next-line @next/next/no-img-element
@@ -221,10 +221,10 @@ function LandingCardLink({
       ) : (
         <div className={`absolute inset-0 ${grad}`} />
       )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/30" />
-      <div className="absolute left-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-black/45 ring-1 ring-white/20">
+      <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/35 to-black/55" />
+      <div className="absolute left-2.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 ring-1 ring-white/20 sm:left-3 sm:h-10 sm:w-10">
         {card.locked ? (
-          <svg className="h-5 w-5 text-white" viewBox="0 0 24 24" aria-hidden>
+          <svg className="h-4 w-4 text-white sm:h-5 sm:w-5" viewBox="0 0 24 24" aria-hidden>
             <path
               fill="currentColor"
               d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm-3 8V7a3 3 0 1 1 6 0v3H9z"
@@ -234,8 +234,8 @@ function LandingCardLink({
           <PlatformGlyph platform={card.platform} />
         )}
       </div>
-      <div className="absolute inset-x-0 bottom-0 p-4 text-center">
-        <span className="text-base font-bold tracking-tight">{card.label}</span>
+      <div className="absolute inset-y-0 left-[3.25rem] right-3 flex items-center justify-center sm:left-14 sm:right-4">
+        <span className="text-center text-sm font-bold tracking-tight sm:text-base">{card.label}</span>
       </div>
     </a>
   );

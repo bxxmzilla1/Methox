@@ -256,8 +256,8 @@ export function LinkForm(props: Props) {
               </button>
             </div>
             <p className="text-xs text-zinc-500">
-              Large buttons on the grid. Mark one as <strong>featured</strong> for a full-width top card. Optional image URL
-              for full-bleed art.
+              Full-width link bars. Mark one as <strong>featured</strong> to pin it at the top. Optional image URL for
+              background art.
             </p>
             {landingCards.length === 0 && (
               <p className="text-xs text-zinc-400">Add at least one card with label and URL.</p>
