@@ -79,6 +79,8 @@ export function LinkForm(props: Props) {
   const [presetsLoading, setPresetsLoading] = useState(false);
   const [presetsError, setPresetsError] = useState<string | null>(null);
   const [presetApplied, setPresetApplied] = useState<string | null>(null);
+  /** Resolved URL for preset hero asset (applied preset), before link Save. */
+  const [presetHeroPreviewUrl, setPresetHeroPreviewUrl] = useState<string | null>(null);
 
   const loadPresetList = useCallback(async () => {
     setPresetsLoading(true);
@@ -103,6 +105,13 @@ export function LinkForm(props: Props) {
     setBioLanding(preset.landing_bio);
     setHeroFocus(preset.landing_hero_focus);
     setLandingCards(normalizeFeaturedFirst(preset.landing_cards));
+    setFile(null);
+    if (heroFileInputRef.current) heroFileInputRef.current.value = "";
+    setPresetHeroPreviewUrl(
+      preset.hero_image_path?.trim()
+        ? publicScreenshotUrl(preset.hero_image_path)
+        : null
+    );
     setCardFiles({});
     setCardClearImage({});
     setCardPreviewBlobs({});
@@ -124,6 +133,16 @@ export function LinkForm(props: Props) {
     fd.set("landing_bio", bioLanding);
     fd.set("landing_cards_json", JSON.stringify(landingCardsNormalized));
     fd.set("landing_hero_focus_json", JSON.stringify(heroFocus));
+    const heroForPreset = file ?? heroFileInputRef.current?.files?.[0] ?? null;
+    if (heroForPreset && heroForPreset.size > 0) {
+      fd.append("preset_hero_image", heroForPreset, heroForPreset.name);
+    }
+    if (isEdit && link) {
+      fd.set("preset_source_link_id", link.id);
+    }
+    Object.entries(cardFiles).forEach(([k, f]) => {
+      fd.append(`preset_card_image_${k}`, f, f.name);
+    });
     const res = await savePreset(fd);
     setPresetSavePending(false);
     if ("error" in res) {
@@ -159,7 +178,7 @@ export function LinkForm(props: Props) {
     return p ? publicScreenshotUrl(p) : null;
   }, [link?.hero_image_path, link?.screenshot_path]);
 
-  const previewHeroUrl = heroObjectUrl ?? savedHeroUrl;
+  const previewHeroUrl = heroObjectUrl ?? presetHeroPreviewUrl ?? savedHeroUrl;
 
   useEffect(() => {
     if (!file) {
@@ -810,7 +829,8 @@ export function LinkForm(props: Props) {
           >
             <h2 className="mb-1 text-base font-semibold text-zinc-900">Save as preset</h2>
             <p className="mb-4 text-sm text-zinc-500">
-              Saves your current display name, handle, bio, cards layout, and hero framing as a reusable preset.
+              Saves your current display name, handle, bio, hero and card photos, layout, and framing as a reusable
+              preset (images are copied into preset storage — not tied to this link&apos;s slug).
             </p>
             <label className="flex flex-col gap-1.5">
               <span className="text-sm font-medium text-zinc-700">Preset name</span>
@@ -867,8 +887,8 @@ export function LinkForm(props: Props) {
               </button>
             </div>
             <p className="text-sm text-zinc-500">
-              Applying a preset fills in the display name, handle, bio, card layout, and hero framing. Your slug and
-              hero image are unchanged.
+              Applying a preset fills in the display name, handle, bio, hero and card images, card layout, and hero
+              framing. Your slug is unchanged until you save this link.
             </p>
 
             {presetsLoading && (
