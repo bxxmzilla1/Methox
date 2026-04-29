@@ -106,6 +106,10 @@ export function DashboardSidebarClient({ links, statsByLinkId, siteBase }: Props
       : `/${selected.slug}`
     : "";
 
+  /** Saved dashboard-only bio (path & preview editor), never the public landing bio. */
+  const dashboardBioPreview =
+    selected != null ? dashboardBioFromRow(selected as unknown as Record<string, unknown>).trim() : "";
+
   async function onSaveDashboard(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!selected) return;
@@ -255,24 +259,44 @@ export function DashboardSidebarClient({ links, statsByLinkId, siteBase }: Props
             </div>
 
             <div className="flex flex-1 flex-col gap-6">
-              <div className="grid gap-6 lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)] lg:items-start lg:gap-8">
-                <div className="mx-auto w-full max-w-[280px] lg:mx-0">
-                  <div className="relative">
-                    <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-emerald-200/30 via-teal-100/20 to-transparent blur-2xl" />
-                    <div className="relative rounded-[2rem] bg-gradient-to-b from-white to-zinc-50 p-4 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.12)] ring-1 ring-zinc-200/80">
-                      {savedShotUrl ? (
-                        <ScreenshotLightbox
-                          src={savedShotUrl}
-                          thumbClassName="relative mx-auto aspect-[9/16] w-full max-w-[240px] overflow-hidden rounded-2xl bg-zinc-100 shadow-inner ring-1 ring-black/5"
-                        />
-                      ) : (
-                        <div className="flex aspect-[9/16] w-full max-w-[240px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-200 bg-zinc-50/80 text-center text-sm text-zinc-400">
-                          No dashboard preview
-                        </div>
-                      )}
-                      <p className="mt-3 text-center text-[11px] font-medium text-zinc-400">
-                        Tap image to view full screen
+              <div className="grid gap-6 lg:grid-cols-[minmax(0,auto)_minmax(0,1fr)] lg:items-start lg:gap-8">
+                <div className="mx-auto flex w-full max-w-[280px] flex-wrap justify-center gap-5 lg:mx-0 lg:max-w-none lg:flex-nowrap lg:justify-start">
+                  <div className="w-full max-w-[280px] shrink-0">
+                    <div className="relative">
+                      <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-emerald-200/30 via-teal-100/20 to-transparent blur-2xl" />
+                      <div className="relative rounded-[2rem] bg-gradient-to-b from-white to-zinc-50 p-4 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.12)] ring-1 ring-zinc-200/80">
+                        {savedShotUrl ? (
+                          <ScreenshotLightbox
+                            src={savedShotUrl}
+                            thumbClassName="relative mx-auto aspect-[9/16] w-full max-w-[240px] overflow-hidden rounded-2xl bg-zinc-100 shadow-inner ring-1 ring-black/5"
+                          />
+                        ) : (
+                          <div className="flex aspect-[9/16] w-full max-w-[240px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-200 bg-zinc-50/80 text-center text-sm text-zinc-400">
+                            No dashboard preview
+                          </div>
+                        )}
+                        <p className="mt-3 text-center text-[11px] font-medium text-zinc-400">
+                          Tap image to view full screen
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex w-full min-w-[200px] max-w-[280px] shrink-0 flex-col lg:max-h-[min(26rem,calc(100vw-4rem))]">
+                    <div className="relative flex min-h-[12rem] flex-1 flex-col rounded-[2rem] bg-gradient-to-b from-white to-zinc-50 p-4 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.12)] ring-1 ring-zinc-200/80">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-500">
+                        Dashboard bio
                       </p>
+                      <p className="mt-1 text-[11px] leading-snug text-zinc-400">
+                        Path only — not your public landing bio.
+                      </p>
+                      <div className="mt-3 min-h-0 flex-1 overflow-y-auto rounded-xl border border-zinc-100 bg-white/90 px-3 py-3 text-sm leading-relaxed text-zinc-800 shadow-inner ring-1 ring-zinc-200/60">
+                        {dashboardBioPreview ? (
+                          <p className="whitespace-pre-wrap break-words">{dashboardBioPreview}</p>
+                        ) : (
+                          <p className="text-zinc-400 italic">No dashboard bio yet. Add one under Edit path & preview.</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
