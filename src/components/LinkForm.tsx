@@ -1,11 +1,12 @@
 "use client";
 
 import { createLink, updateLink, type LinkRow } from "@/app/actions/links";
+import { deletePreset, listPresets, savePreset, type PresetRow } from "@/app/actions/presets";
 import { ImageFocusPan } from "@/components/ImageFocusPan";
 import { LandingLivePreview } from "@/components/LandingLivePreview";
 import { publicScreenshotUrl } from "@/lib/storage";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ImageFocus, LandingCard } from "@/lib/landing-data";
 import { DEFAULT_IMAGE_FOCUS, DEFAULT_LOCKED_HINT_TEXT, normalizeFeaturedFirst } from "@/lib/landing-data";
 import { PLATFORM_OPTIONS } from "@/lib/platforms";
@@ -67,6 +68,81 @@ export function LinkForm(props: Props) {
     isEdit && link?.landing_hero_focus ? link.landing_hero_focus : { ...DEFAULT_IMAGE_FOCUS }
   );
   const heroFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Preset state
+  const [presetSaveOpen, setPresetSaveOpen] = useState(false);
+  const [presetSaveName, setPresetSaveName] = useState("");
+  const [presetSavePending, setPresetSavePending] = useState(false);
+  const [presetSaveError, setPresetSaveError] = useState<string | null>(null);
+  const [presetLoadOpen, setPresetLoadOpen] = useState(false);
+  const [presets, setPresets] = useState<PresetRow[] | null>(null);
+  const [presetsLoading, setPresetsLoading] = useState(false);
+  const [presetsError, setPresetsError] = useState<string | null>(null);
+  const [presetApplied, setPresetApplied] = useState<string | null>(null);
+
+  const loadPresetList = useCallback(async () => {
+    setPresetsLoading(true);
+    setPresetsError(null);
+    const res = await listPresets();
+    setPresetsLoading(false);
+    if ("error" in res) {
+      setPresetsError(res.error);
+    } else {
+      setPresets(res.data);
+    }
+  }, []);
+
+  function openLoadPresets() {
+    setPresetLoadOpen(true);
+    if (presets === null) void loadPresetList();
+  }
+
+  function applyPreset(preset: PresetRow) {
+    setDisplayName(preset.display_name);
+    setHandle(preset.handle);
+    setBioLanding(preset.landing_bio);
+    setHeroFocus(preset.landing_hero_focus);
+    setLandingCards(normalizeFeaturedFirst(preset.landing_cards));
+    setCardFiles({});
+    setCardClearImage({});
+    setCardPreviewBlobs({});
+    setPresetApplied(preset.name);
+    setPresetLoadOpen(false);
+  }
+
+  async function handleSavePreset() {
+    if (!presetSaveName.trim()) {
+      setPresetSaveError("Enter a name for this preset.");
+      return;
+    }
+    setPresetSavePending(true);
+    setPresetSaveError(null);
+    const fd = new FormData();
+    fd.set("preset_name", presetSaveName.trim());
+    fd.set("display_name", displayName);
+    fd.set("handle", handle);
+    fd.set("landing_bio", bioLanding);
+    fd.set("landing_cards_json", JSON.stringify(landingCardsNormalized));
+    fd.set("landing_hero_focus_json", JSON.stringify(heroFocus));
+    const res = await savePreset(fd);
+    setPresetSavePending(false);
+    if ("error" in res) {
+      setPresetSaveError(res.error);
+    } else {
+      setPresets((prev) => (prev ? [res.data, ...prev] : [res.data]));
+      setPresetSaveOpen(false);
+      setPresetSaveName("");
+    }
+  }
+
+  async function handleDeletePreset(id: string) {
+    const res = await deletePreset(id);
+    if ("error" in res) {
+      setPresetsError(res.error);
+    } else {
+      setPresets((prev) => (prev ? prev.filter((p) => p.id !== id) : prev));
+    }
+  }
 
   const defaults = useMemo(
     () => ({
@@ -349,14 +425,35 @@ export function LinkForm(props: Props) {
           <div className="flex flex-col gap-2 rounded-2xl border border-zinc-200/90 bg-white p-4">
             <div className="flex items-center justify-between gap-2">
               <span className="text-sm font-medium text-zinc-800">Link cards</span>
-              <button
-                type="button"
-                onClick={addCard}
-                className="rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100"
-              >
-                Add card
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={openLoadPresets}
+                  className="rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100"
+                >
+                  Load preset
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setPresetSaveOpen(true); setPresetSaveError(null); }}
+                  className="rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100"
+                >
+                  Save as preset
+                </button>
+                <button
+                  type="button"
+                  onClick={addCard}
+                  className="rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100"
+                >
+                  Add card
+                </button>
+              </div>
             </div>
+            {presetApplied && (
+              <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-1.5">
+                Preset &ldquo;{presetApplied}&rdquo; applied — review and save when ready.
+              </p>
+            )}
             <p className="text-xs text-zinc-500">
               The first card is shown full-width at the top; add more cards below. Optionally upload a background image
               per card.
@@ -702,6 +799,123 @@ export function LinkForm(props: Props) {
             here as you edit.
           </p>
         </aside>
+      )}
+
+      {/* Save as preset modal */}
+      {presetSaveOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setPresetSaveOpen(false)}>
+          <div
+            className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="mb-1 text-base font-semibold text-zinc-900">Save as preset</h2>
+            <p className="mb-4 text-sm text-zinc-500">
+              Saves your current display name, handle, bio, cards layout, and hero framing as a reusable preset.
+            </p>
+            <label className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium text-zinc-700">Preset name</span>
+              <input
+                autoFocus
+                type="text"
+                value={presetSaveName}
+                onChange={(e) => setPresetSaveName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") void handleSavePreset(); }}
+                placeholder="e.g. Main profile, Summer campaign…"
+                className="rounded-xl border border-zinc-200 bg-zinc-50/50 px-3 py-2.5 text-zinc-900 outline-none placeholder:text-zinc-400 focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20"
+              />
+            </label>
+            {presetSaveError && (
+              <p className="mt-2 text-sm text-red-600">{presetSaveError}</p>
+            )}
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => { setPresetSaveOpen(false); setPresetSaveName(""); }}
+                className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={presetSavePending}
+                onClick={() => void handleSavePreset()}
+                className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-emerald-600/20 hover:bg-emerald-500 disabled:opacity-50"
+              >
+                {presetSavePending ? "Saving…" : "Save preset"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Load preset panel */}
+      {presetLoadOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setPresetLoadOpen(false)}>
+          <div
+            className="flex w-full max-w-md flex-col gap-4 rounded-2xl bg-white p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-base font-semibold text-zinc-900">Load preset</h2>
+              <button
+                type="button"
+                onClick={() => setPresetLoadOpen(false)}
+                className="text-zinc-400 hover:text-zinc-600"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="text-sm text-zinc-500">
+              Applying a preset fills in the display name, handle, bio, card layout, and hero framing. Your slug and
+              hero image are unchanged.
+            </p>
+
+            {presetsLoading && (
+              <p className="text-sm text-zinc-500">Loading presets…</p>
+            )}
+            {presetsError && (
+              <p className="text-sm text-red-600">{presetsError}</p>
+            )}
+            {!presetsLoading && presets !== null && presets.length === 0 && (
+              <p className="rounded-xl border border-dashed border-zinc-200 px-4 py-6 text-center text-sm text-zinc-400">
+                No presets yet. Fill out your landing page and click <strong>Save as preset</strong>.
+              </p>
+            )}
+            {!presetsLoading && presets !== null && presets.length > 0 && (
+              <ul className="flex max-h-72 flex-col gap-2 overflow-y-auto">
+                {presets.map((p) => (
+                  <li key={p.id} className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-50/60 px-3 py-2.5">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-zinc-900">{p.name}</p>
+                      <p className="truncate text-xs text-zinc-500">
+                        {p.display_name || p.handle
+                          ? [p.display_name, p.handle ? `@${p.handle}` : ""].filter(Boolean).join(" · ")
+                          : "No display info"}
+                        {p.landing_cards.length > 0 ? ` · ${p.landing_cards.length} card${p.landing_cards.length === 1 ? "" : "s"}` : ""}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => applyPreset(p)}
+                      className="shrink-0 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-emerald-500"
+                    >
+                      Apply
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleDeletePreset(p.id)}
+                      className="shrink-0 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
+                      aria-label="Delete preset"
+                    >
+                      Delete
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
