@@ -32,9 +32,11 @@ type Props = {
 const fieldClass =
   "w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 outline-none ring-emerald-500/0 transition placeholder:text-zinc-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20";
 
-export function DashboardSidebarClient({ links, statsByLinkId, siteBase }: Props) {
+export function DashboardSidebarClient({ links, statsByLinkId: initialStatsByLinkId, siteBase }: Props) {
   const router = useRouter();
   const [selectedId, setSelectedId] = useState<string | null>(links[0]?.id ?? null);
+
+  const [liveStatsByLinkId, setLiveStatsByLinkId] = useState<Record<string, LinkStats>>(initialStatsByLinkId);
 
   const [draftSlug, setDraftSlug] = useState("");
   const [draftBio, setDraftBio] = useState("");
@@ -95,7 +97,49 @@ export function DashboardSidebarClient({ links, statsByLinkId, siteBase }: Props
     return () => URL.revokeObjectURL(u);
   }, [dashFile]);
 
-  const stats = selected ? statsByLinkId[selected.id] : undefined;
+  useEffect(() => {
+    setLiveStatsByLinkId(initialStatsByLinkId);
+  }, [initialStatsByLinkId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let intervalId: ReturnType<typeof setInterval> | undefined;
+
+    function tick() {
+      if (cancelled || document.visibilityState === "hidden") return;
+      void (async () => {
+        try {
+          const res = await fetch("/api/dashboard/stats", {
+            credentials: "same-origin",
+            cache: "no-store",
+          });
+          if (!res.ok || cancelled) return;
+          const data = (await res.json()) as { statsByLinkId?: Record<string, LinkStats> };
+          if (data.statsByLinkId && !cancelled) {
+            setLiveStatsByLinkId(data.statsByLinkId);
+          }
+        } catch {
+          /* network errors — silent until next poll */
+        }
+      })();
+    }
+
+    tick();
+    intervalId = setInterval(tick, 1000);
+
+    function onVisibility() {
+      if (document.visibilityState === "visible") tick();
+    }
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      cancelled = true;
+      if (intervalId !== undefined) clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, []);
+
+  const stats = selected ? liveStatsByLinkId[selected.id] : undefined;
 
   const savedShotUrl = selected ? publicScreenshotUrl(selected.screenshot_path) : null;
   const displayShotUrl = clearDashShot ? null : (dashPreviewUrl ?? savedShotUrl);
@@ -156,7 +200,7 @@ export function DashboardSidebarClient({ links, statsByLinkId, siteBase }: Props
         </div>
         <nav className="flex max-h-[42vh] gap-2 overflow-x-auto overflow-y-auto p-3 lg:max-h-none lg:flex-col lg:gap-1 lg:overflow-x-visible">
           {links.map((link) => {
-            const s = statsByLinkId[link.id];
+            const s = liveStatsByLinkId[link.id];
             const active = link.id === selectedId;
             return (
               <button
