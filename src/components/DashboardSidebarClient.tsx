@@ -4,12 +4,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { updateDashboardLinkProfile } from "@/app/actions/links";
-import { dashboardBioFromRow } from "@/lib/link-bio";
+import { coerceLandingCards, coerceLandingHeroFocus, DEFAULT_IMAGE_FOCUS } from "@/lib/landing-data";
+import { dashboardBioFromRow, landingBioFromRow } from "@/lib/link-bio";
 import type { LinkStats } from "@/lib/stats";
 import { publicScreenshotUrl } from "@/lib/storage";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { DeleteLinkButton } from "@/components/DeleteLinkButton";
 import { CountryChart } from "@/components/CountryChart";
+import { PublicLanding } from "@/components/PublicLanding";
 import { ScreenshotLightbox } from "@/components/ScreenshotLightbox";
 
 export type DashboardLinkRow = {
@@ -21,6 +23,11 @@ export type DashboardLinkRow = {
   hero_image_path?: string | null;
   public_page_mode?: string | null;
   created_at: string;
+  display_name?: string | null;
+  handle?: string | null;
+  landing_bio?: string | null;
+  landing_hero_focus?: unknown;
+  landing_cards?: unknown;
 };
 
 type Props = {
@@ -105,6 +112,11 @@ export function DashboardSidebarClient({ links, statsByLinkId, siteBase }: Props
       ? `${siteBase}/${selected.slug}`
       : `/${selected.slug}`
     : "";
+
+  const landingBio = selected ? landingBioFromRow(selected as unknown as Record<string, unknown>) : "";
+  const landingHeroUrl = selected ? publicScreenshotUrl(selected.hero_image_path ?? null) : null;
+  const landingHeroFocus = selected ? coerceLandingHeroFocus(selected.landing_hero_focus) : DEFAULT_IMAGE_FOCUS;
+  const landingCards = selected ? coerceLandingCards(selected.landing_cards) : [];
 
   async function onSaveDashboard(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -255,24 +267,54 @@ export function DashboardSidebarClient({ links, statsByLinkId, siteBase }: Props
             </div>
 
             <div className="flex flex-1 flex-col gap-6">
-              <div className="grid gap-6 lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)] lg:items-start lg:gap-8">
-                <div className="mx-auto w-full max-w-[280px] lg:mx-0">
-                  <div className="relative">
-                    <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-emerald-200/30 via-teal-100/20 to-transparent blur-2xl" />
-                    <div className="relative rounded-[2rem] bg-gradient-to-b from-white to-zinc-50 p-4 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.12)] ring-1 ring-zinc-200/80">
-                      {savedShotUrl ? (
-                        <ScreenshotLightbox
-                          src={savedShotUrl}
-                          thumbClassName="relative mx-auto aspect-[9/16] w-full max-w-[240px] overflow-hidden rounded-2xl bg-zinc-100 shadow-inner ring-1 ring-black/5"
-                        />
-                      ) : (
-                        <div className="flex aspect-[9/16] w-full max-w-[240px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-200 bg-zinc-50/80 text-center text-sm text-zinc-400">
-                          No dashboard preview
+              <div className="grid gap-6 lg:grid-cols-[auto_minmax(0,1fr)] lg:items-start lg:gap-8">
+                <div className="flex flex-wrap justify-center gap-5 lg:justify-start">
+                  {/* Dashboard screenshot preview */}
+                  <div className="w-full max-w-[210px]">
+                    <div className="relative">
+                      <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-emerald-200/30 via-teal-100/20 to-transparent blur-2xl" />
+                      <div className="relative rounded-[2rem] bg-gradient-to-b from-white to-zinc-50 p-3 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.12)] ring-1 ring-zinc-200/80">
+                        {savedShotUrl ? (
+                          <ScreenshotLightbox
+                            src={savedShotUrl}
+                            thumbClassName="relative mx-auto aspect-[9/16] w-full max-w-[180px] overflow-hidden rounded-2xl bg-zinc-100 shadow-inner ring-1 ring-black/5"
+                          />
+                        ) : (
+                          <div className="flex aspect-[9/16] w-full max-w-[180px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-200 bg-zinc-50/80 text-center text-sm text-zinc-400">
+                            No dashboard preview
+                          </div>
+                        )}
+                        <p className="mt-2 text-center text-[10px] font-medium text-zinc-400">
+                          Dashboard preview
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Live link bio preview */}
+                  <div className="w-full max-w-[210px]">
+                    <div className="relative">
+                      <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-teal-200/30 via-emerald-100/20 to-transparent blur-2xl" />
+                      <div className="relative rounded-[2rem] bg-gradient-to-b from-white to-zinc-50 p-3 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.12)] ring-1 ring-zinc-200/80">
+                        <div className="relative mx-auto aspect-[9/16] w-full max-w-[180px] overflow-hidden rounded-2xl bg-zinc-950 shadow-inner ring-1 ring-black/5">
+                          <div className="absolute inset-0 overflow-y-auto overflow-x-hidden overscroll-contain">
+                            <PublicLanding
+                              slug={selected.slug}
+                              displayName={selected.display_name ?? ""}
+                              handle={selected.handle ?? ""}
+                              bio={landingBio}
+                              heroUrl={landingHeroUrl}
+                              heroFocus={landingHeroFocus}
+                              cards={landingCards}
+                              embedded
+                              isPreview
+                            />
+                          </div>
                         </div>
-                      )}
-                      <p className="mt-3 text-center text-[11px] font-medium text-zinc-400">
-                        Tap image to view full screen
-                      </p>
+                        <p className="mt-2 text-center text-[10px] font-medium text-zinc-400">
+                          Live bio preview
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
