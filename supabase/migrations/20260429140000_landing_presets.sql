@@ -7,7 +7,7 @@ create table if not exists public.landing_presets (
   handle        text not null default '',
   landing_bio   text not null default '',
   landing_cards jsonb not null default '[]'::jsonb,
-  landing_hero_focus jsonb not null default '{"x":50,"y":50,"scale":1}'::jsonb,
+  landing_hero_focus jsonb not null default '{"x":50,"y":50}'::jsonb,
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now()
 );

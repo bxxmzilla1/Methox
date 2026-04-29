@@ -37,7 +37,7 @@ function coercePresetRow(row: Record<string, unknown>): PresetRow {
     handle: String(row.handle ?? ""),
     landing_bio: String(row.landing_bio ?? ""),
     landing_cards: coerceLandingCards(row.landing_cards),
-    landing_hero_focus: focusParsed.ok ? focusParsed.data : { x: 50, y: 50, scale: 1 },
+    landing_hero_focus: focusParsed.ok ? focusParsed.data : { x: 50, y: 50 },
     created_at: String(row.created_at ?? ""),
     updated_at: String(row.updated_at ?? ""),
   };
