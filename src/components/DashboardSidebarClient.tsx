@@ -106,6 +106,10 @@ export function DashboardSidebarClient({ links, statsByLinkId, siteBase }: Props
       : `/${selected.slug}`
     : "";
 
+  /** Dashboard / path bio only (Edit path & preview), not the public landing bio. */
+  const pathBioText =
+    selected != null ? dashboardBioFromRow(selected as unknown as Record<string, unknown>).trim() : "";
+
   async function onSaveDashboard(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!selected) return;
@@ -301,6 +305,28 @@ export function DashboardSidebarClient({ links, statsByLinkId, siteBase }: Props
                       Use <strong>Edit path & preview</strong> to change the URL path, dashboard-only bio, or the
                       preview image.
                     </p>
+                  </div>
+
+                  <div className="relative overflow-hidden rounded-2xl border border-zinc-200/90 bg-gradient-to-b from-white to-zinc-50/80 p-4 shadow-sm">
+                    <div
+                      className="pointer-events-none absolute inset-0 opacity-[0.35]"
+                      style={{
+                        backgroundImage:
+                          "linear-gradient(to right, rgba(24,24,27,0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(24,24,27,0.06) 1px, transparent 1px)",
+                        backgroundSize: "14px 14px",
+                      }}
+                      aria-hidden
+                    />
+                    <p className="relative z-[1] text-[11px] font-semibold uppercase tracking-[0.15em] text-emerald-700/90">
+                      BIO:
+                    </p>
+                    <div className="relative z-[1] mt-3 text-sm leading-relaxed text-zinc-800">
+                      {pathBioText ? (
+                        <p className="whitespace-pre-wrap break-words">{pathBioText}</p>
+                      ) : (
+                        <p className="text-zinc-500 italic">No bio yet.</p>
+                      )}
+                    </div>
                   </div>
 
                   {stats && stats.countries.length > 0 && stats.totalClicks > 0 ? (
