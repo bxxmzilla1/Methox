@@ -316,6 +316,7 @@ export function LinkForm(props: Props) {
         <input type="hidden" name="social_links_json" value="[]" />
         <input type="hidden" name="follower_summary" value="" />
         <input type="hidden" name="hero_image_storage_path" value={landingHeroStoragePath ?? ""} />
+        <input type="hidden" name="landing_hero_focus_json" value={JSON.stringify(heroFocus)} />
         <input type="hidden" name="landing_cards_json" value={JSON.stringify(landingCardsNormalized)} />
 
         {props.mode === "create" && (
