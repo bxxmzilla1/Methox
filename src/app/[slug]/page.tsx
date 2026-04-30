@@ -60,7 +60,8 @@ export default async function PublicLinkPage({ params }: PageProps) {
   }
 
   const heroPath =
-    (row.hero_image_path as string | null | undefined) ?? (row.screenshot_path as string | null) ?? null;
+    (row.hero_image_path as string | null | undefined) ??
+    null;
   const heroUrl = publicScreenshotUrl(heroPath);
   const heroFocus = coerceLandingHeroFocus(row.landing_hero_focus);
   const cards = coerceLandingCards(row.landing_cards);

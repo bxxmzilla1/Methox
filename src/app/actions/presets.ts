@@ -9,6 +9,7 @@ import {
   type ImageFocus,
   type LandingCard,
 } from "@/lib/landing-data";
+import { storageCopyScreenshotsObject } from "@/lib/storage-copy";
 import { uploadPresetCardImage, uploadPresetHero } from "@/lib/storage-upload";
 
 export type PresetRow = {
@@ -58,26 +59,6 @@ function isPathOwnedByLink(userId: string, linkId: string, path: string | null):
 
 function presetBase(userId: string, presetId: string): string {
   return `${userId}/presets/${presetId}`;
-}
-
-/** Copy screenshot object by download → upload (works across MIME types without server-side copy ACL). */
-async function storageCopyScreenshotsObject(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  fromPath: string,
-  toPath: string
-): Promise<{ ok: true } | { ok: false; message: string }> {
-  const { error: dlErr, data } = await supabase.storage.from("screenshots").download(fromPath);
-  if (dlErr || !data) return { ok: false, message: dlErr?.message ?? "Could not read source image." };
-  const ab = await data.arrayBuffer();
-  const contentType =
-    data.type && /^image\/[a-z0-9.+~-]+$/i.test(data.type) ? data.type : "image/jpeg";
-
-  const { error: upErr } = await supabase.storage.from("screenshots").upload(toPath, ab, {
-    upsert: true,
-    contentType,
-  });
-  if (upErr) return { ok: false, message: upErr.message };
-  return { ok: true };
 }
 
 function stripCardImages(c: LandingCard): LandingCard {
@@ -159,17 +140,14 @@ export async function savePreset(formData: FormData): Promise<{ data: PresetRow 
     } else if (sourceLinkId) {
       const { data: ln } = await supabase
         .from("links")
-        .select("hero_image_path, screenshot_path")
+        .select("hero_image_path")
         .eq("id", sourceLinkId)
         .eq("user_id", user.id)
         .single();
 
+      /** Landing hero only — never dashboard screenshot_path (different asset). */
       const src =
-        ln?.hero_image_path && typeof ln.hero_image_path === "string"
-          ? ln.hero_image_path
-          : ln?.screenshot_path && typeof ln.screenshot_path === "string"
-            ? ln.screenshot_path
-            : null;
+        ln?.hero_image_path && typeof ln.hero_image_path === "string" ? ln.hero_image_path : null;
 
       if (src && isPathOwnedByLink(user.id, sourceLinkId, src)) {
         const extMatch = /\.([^.]+)$/.exec(src);

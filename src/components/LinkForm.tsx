@@ -79,8 +79,10 @@ export function LinkForm(props: Props) {
   const [presetsLoading, setPresetsLoading] = useState(false);
   const [presetsError, setPresetsError] = useState<string | null>(null);
   const [presetApplied, setPresetApplied] = useState<string | null>(null);
-  /** Resolved URL for preset hero asset (applied preset), before link Save. */
-  const [presetHeroPreviewUrl, setPresetHeroPreviewUrl] = useState<string | null>(null);
+  /** Landing hero storage path (from saved link or applied preset); submitted when no new file is chosen. */
+  const [landingHeroStoragePath, setLandingHeroStoragePath] = useState<string | null>(() =>
+    isEdit && link ? (link.hero_image_path ?? null) : null
+  );
 
   const loadPresetList = useCallback(async () => {
     setPresetsLoading(true);
@@ -107,11 +109,7 @@ export function LinkForm(props: Props) {
     setLandingCards(normalizeFeaturedFirst(preset.landing_cards));
     setFile(null);
     if (heroFileInputRef.current) heroFileInputRef.current.value = "";
-    setPresetHeroPreviewUrl(
-      preset.hero_image_path?.trim()
-        ? publicScreenshotUrl(preset.hero_image_path)
-        : null
-    );
+    setLandingHeroStoragePath(preset.hero_image_path?.trim() ? preset.hero_image_path.trim() : null);
     setCardFiles({});
     setCardClearImage({});
     setCardPreviewBlobs({});
@@ -170,15 +168,17 @@ export function LinkForm(props: Props) {
     [link]
   );
 
+  useEffect(() => {
+    if (!isEdit || !link) return;
+    setLandingHeroStoragePath(link.hero_image_path ?? null);
+  }, [isEdit, link?.id]);
+
   const previewSlug =
     isEdit && link ? link.slug : slugDraft.trim().toLowerCase() || "preview";
 
-  const savedHeroUrl = useMemo(() => {
-    const p = link?.hero_image_path ?? link?.screenshot_path;
-    return p ? publicScreenshotUrl(p) : null;
-  }, [link?.hero_image_path, link?.screenshot_path]);
-
-  const previewHeroUrl = heroObjectUrl ?? presetHeroPreviewUrl ?? savedHeroUrl;
+  const previewHeroUrl =
+    heroObjectUrl ??
+    (landingHeroStoragePath ? publicScreenshotUrl(landingHeroStoragePath) : null);
 
   useEffect(() => {
     if (!file) {
@@ -315,7 +315,7 @@ export function LinkForm(props: Props) {
         <input type="hidden" name="public_page_mode" value={pageMode} />
         <input type="hidden" name="social_links_json" value="[]" />
         <input type="hidden" name="follower_summary" value="" />
-        <input type="hidden" name="landing_hero_focus_json" value={JSON.stringify(heroFocus)} />
+        <input type="hidden" name="hero_image_storage_path" value={landingHeroStoragePath ?? ""} />
         <input type="hidden" name="landing_cards_json" value={JSON.stringify(landingCardsNormalized)} />
 
         {props.mode === "create" && (
@@ -771,7 +771,7 @@ export function LinkForm(props: Props) {
               </span>
             )}
           </div>
-          {isEdit && (link?.hero_image_path ?? link?.screenshot_path) && !file && (
+          {isEdit && link?.hero_image_path && !file && (
             <span className="text-xs text-zinc-500">Current image kept unless you choose a new file.</span>
           )}
           <span className="text-xs text-zinc-500">

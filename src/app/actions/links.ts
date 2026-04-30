@@ -13,6 +13,7 @@ import {
   type SocialLink,
 } from "@/lib/landing-data";
 import { uploadDashboardScreenshot, uploadHeroScreenshot, uploadLinkCardImage } from "@/lib/storage-upload";
+import { isUserPresetCardPath, isUserPresetHeroPath, storageCopyScreenshotsObject } from "@/lib/storage-copy";
 import { normalizeHttpUrl } from "@/lib/urls";
 
 export type LinkRow = {
@@ -67,6 +68,16 @@ function safeCardImagePath(userId: string, linkId: string, p: string | null | un
   return s.slice(0, 512);
 }
 
+function prepareCardsForInitialInsert(userId: string, cards: LandingCard[]): LandingCard[] {
+  return cards.map((c) => {
+    const p = c.image_path?.trim() ?? null;
+    if (p && isUserPresetCardPath(userId, p)) {
+      return { ...c, image_url: c.image_url ?? null };
+    }
+    return stripCardForInsert(c);
+  });
+}
+
 function stripCardForInsert(c: LandingCard): LandingCard {
   return {
     label: c.label,
@@ -93,7 +104,23 @@ async function applyLandingCardImages(
   previousCards: LandingCard[] | null
 ): Promise<{ ok: true; cards: LandingCard[] } | { ok: false; message: string }> {
   const prev = previousCards ?? [];
-  const next: LandingCard[] = cards.map((c) => ({
+  const working: LandingCard[] = cards.map((c) => ({ ...c }));
+
+  for (let i = 0; i < working.length; i++) {
+    const uploadFile = formData.get(`card_image_${i}`);
+    if (uploadFile instanceof File && uploadFile.size > 0) continue;
+    const rawPath = working[i].image_path?.trim() ?? null;
+    if (rawPath && isUserPresetCardPath(userId, rawPath)) {
+      const extMatch = /\.([^.]+)$/.exec(rawPath);
+      const ext = extMatch ? extMatch[1]!.toLowerCase() : "jpg";
+      const dst = `${userId}/${linkId}/cards/${i}.${ext}`;
+      const cp = await storageCopyScreenshotsObject(supabase, rawPath, dst);
+      if (!cp.ok) return { ok: false, message: `Card ${i + 1} image: ${cp.message}` };
+      working[i] = { ...working[i], image_path: dst, image_url: null };
+    }
+  }
+
+  const next: LandingCard[] = working.map((c) => ({
     ...c,
     image_path: safeCardImagePath(userId, linkId, c.image_path ?? null),
     image_url: c.image_url ?? null,
@@ -190,7 +217,7 @@ export async function createLink(formData: FormData) {
 
   const cardsForInsert =
     public_page_mode === "landing"
-      ? payload.landing_cards.map(stripCardForInsert)
+      ? prepareCardsForInitialInsert(user.id, payload.landing_cards)
       : payload.landing_cards;
 
   const { data, error } = await supabase
@@ -237,6 +264,32 @@ export async function createLink(formData: FormData) {
     if (pathErr) {
       await rollbackNewLink(supabase, user.id, data.id, up.path);
       return { error: pathErr.message };
+    }
+  } else {
+    const heroRef = String(formData.get("hero_image_storage_path") ?? "").trim();
+    if (
+      public_page_mode === "landing" &&
+      heroRef &&
+      isUserPresetHeroPath(user.id, heroRef)
+    ) {
+      const extMatch = /\.([^.]+)$/.exec(heroRef);
+      const ext = extMatch ? extMatch[1]!.toLowerCase() : "jpg";
+      const dst = `${user.id}/${data.id}.${ext}`;
+      const cp = await storageCopyScreenshotsObject(supabase, heroRef, dst);
+      if (!cp.ok) {
+        await rollbackNewLink(supabase, user.id, data.id, null);
+        return { error: `Hero image: ${cp.message}` };
+      }
+      heroPath = dst;
+      const { error: pathErr } = await supabase
+        .from("links")
+        .update({ hero_image_path: dst, updated_at: new Date().toISOString() })
+        .eq("id", data.id)
+        .eq("user_id", user.id);
+      if (pathErr) {
+        await rollbackNewLink(supabase, user.id, data.id, dst);
+        return { error: pathErr.message };
+      }
     }
   }
 
@@ -356,6 +409,27 @@ export async function updateLink(linkId: string, slug: string, formData: FormDat
       await supabase.storage.from("screenshots").remove([existing.hero_image_path]).catch(() => undefined);
     }
     patch.hero_image_path = up.path;
+  } else if (public_page_mode === "landing") {
+    const heroStorageRef = String(formData.get("hero_image_storage_path") ?? "").trim();
+    if (heroStorageRef && isUserPresetHeroPath(user.id, heroStorageRef)) {
+      const { data: existing } = await supabase
+        .from("links")
+        .select("hero_image_path")
+        .eq("id", linkId)
+        .eq("user_id", user.id)
+        .single();
+
+      const extMatch = /\.([^.]+)$/.exec(heroStorageRef);
+      const ext = extMatch ? extMatch[1]!.toLowerCase() : "jpg";
+      const dst = `${user.id}/${linkId}.${ext}`;
+      const cp = await storageCopyScreenshotsObject(supabase, heroStorageRef, dst);
+      if (!cp.ok) return { error: `Hero image: ${cp.message}` };
+
+      if (existing?.hero_image_path && existing.hero_image_path !== dst) {
+        await supabase.storage.from("screenshots").remove([existing.hero_image_path]).catch(() => undefined);
+      }
+      patch.hero_image_path = dst;
+    }
   }
 
   const { error } = await supabase.from("links").update(patch).eq("id", linkId).eq("user_id", user.id);
