@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import type { ClickRow } from "@/lib/stats";
-import { statsForLinks } from "@/lib/stats";
+import { cardClicksByLinkId, statsForLinks } from "@/lib/stats";
 
 export const dynamic = "force-dynamic";
 
@@ -19,11 +19,18 @@ export async function GET() {
   const ids = (links ?? []).map((l) => l.id as string);
   let clickRows: ClickRow[] | null = null;
   if (ids.length) {
-    const { data } = await supabase.from("clicks").select("link_id, visitor_id, country").in("link_id", ids);
+    const { data } = await supabase
+      .from("clicks")
+      .select("link_id, visitor_id, country, card_index")
+      .in("link_id", ids);
     clickRows = (data as ClickRow[]) ?? null;
   }
 
   const stats = statsForLinks(clickRows);
   const statsByLinkId = Object.fromEntries(stats);
-  return NextResponse.json({ statsByLinkId }, { headers: { "Cache-Control": "no-store" } });
+  const cardClicks = cardClicksByLinkId(clickRows);
+  return NextResponse.json(
+    { statsByLinkId, cardClicksByLinkId: cardClicks },
+    { headers: { "Cache-Control": "no-store" } }
+  );
 }

@@ -10,6 +10,7 @@ import {
 import { applyGeoPlaceholders, type ViewerGeo } from "@/lib/ipinfo";
 import { cardGradientClass, type PlatformId } from "@/lib/platforms";
 import { publicScreenshotUrl } from "@/lib/storage";
+import { recordCardClick } from "@/app/actions/track-click";
 import { useEffect, useMemo, useState } from "react";
 
 function formatHandle(raw: string): string | null {
@@ -117,6 +118,8 @@ export type PublicLandingProps = {
   heroUrl: string | null;
   heroFocus?: ImageFocus | null;
   cards: LandingCard[];
+  /** When set on the live page (not embedded / preview), card taps are tracked. */
+  linkId?: string | null;
   /** Shorter layout for dashboard live preview */
   embedded?: boolean;
   /** Block navigation (editor preview) */
@@ -131,6 +134,7 @@ export function PublicLanding({
   heroUrl,
   heroFocus,
   cards,
+  linkId = null,
   embedded = false,
   isPreview = false,
 }: PublicLandingProps) {
@@ -164,6 +168,7 @@ export function PublicLanding({
   // Order is list order: first card is always the taller “featured” bar (no UI toggle).
   const top = cards[0];
   const rest = cards.slice(1);
+  const trackCards = Boolean(linkId) && !embedded && !isPreview;
 
   return (
     <div
@@ -241,6 +246,8 @@ export function PublicLanding({
                   embedded ? "h-[7rem] w-full" : "h-[7rem] w-full sm:h-[8rem]"
                 }
                 isPreview={isPreview}
+                linkId={trackCards ? linkId : null}
+                cardIndex={trackCards ? 0 : undefined}
               />
             )}
             {rest.map((card, i) => (
@@ -249,6 +256,8 @@ export function PublicLanding({
                 card={card}
                 className={embedded ? "h-[7rem] w-full" : "h-[7rem] w-full sm:h-[8rem]"}
                 isPreview={isPreview}
+                linkId={trackCards ? linkId : null}
+                cardIndex={trackCards ? i + 1 : undefined}
               />
             ))}
           </div>
@@ -262,10 +271,14 @@ function LandingCardLink({
   card,
   className,
   isPreview,
+  linkId,
+  cardIndex,
 }: {
   card: LandingCard;
   className: string;
   isPreview?: boolean;
+  linkId?: string | null;
+  cardIndex?: number;
 }) {
   const grad = cardGradientClass(card.platform);
   const bgUrl = cardBackgroundUrl(card);
@@ -276,7 +289,15 @@ function LandingCardLink({
       href={isPreview ? "#preview" : card.url}
       target={isPreview ? undefined : "_blank"}
       rel={isPreview ? undefined : "noopener noreferrer"}
-      onClick={isPreview ? (e) => e.preventDefault() : undefined}
+      onClick={
+        isPreview
+          ? (e) => e.preventDefault()
+          : linkId && cardIndex !== undefined
+            ? () => {
+                void recordCardClick(linkId, cardIndex);
+              }
+            : undefined
+      }
       className={`group relative block overflow-hidden rounded-2xl ring-1 ring-white/10 ${className}`}
     >
       {bgUrl ? (

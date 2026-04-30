@@ -6,7 +6,7 @@ import { randomUUID } from "crypto";
 
 const VISITOR_COOKIE = "flinky_bio_vid";
 
-export async function recordClick(linkId: string) {
+async function visitorIdAndCountry(): Promise<{ visitorId: string; country: string }> {
   const cookieStore = await cookies();
   let visitorId = cookieStore.get(VISITOR_COOKIE)?.value;
   if (!visitorId) {
@@ -29,10 +29,28 @@ export async function recordClick(linkId: string) {
   const country =
     raw.length >= 2 ? raw.slice(0, 2).toUpperCase() : "unknown";
 
+  return { visitorId, country };
+}
+
+export async function recordClick(linkId: string) {
+  const { visitorId, country } = await visitorIdAndCountry();
   const supabase = await createClient();
   await supabase.from("clicks").insert({
     link_id: linkId,
     visitor_id: visitorId,
     country,
+    card_index: null,
+  });
+}
+
+export async function recordCardClick(linkId: string, cardIndex: number) {
+  if (!Number.isInteger(cardIndex) || cardIndex < 0) return;
+  const { visitorId, country } = await visitorIdAndCountry();
+  const supabase = await createClient();
+  await supabase.from("clicks").insert({
+    link_id: linkId,
+    visitor_id: visitorId,
+    country,
+    card_index: cardIndex,
   });
 }

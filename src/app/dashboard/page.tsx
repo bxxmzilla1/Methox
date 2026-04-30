@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { SignOutButton } from "@/components/SignOutButton";
 import { DashboardSidebarClient } from "@/components/DashboardSidebarClient";
 import { APP_NAME } from "@/lib/constants";
-import { statsForLinks } from "@/lib/stats";
+import { cardClicksByLinkId, statsForLinks } from "@/lib/stats";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -16,19 +16,26 @@ export default async function DashboardPage() {
 
   const { data: links } = await supabase
     .from("links")
-    .select("id, slug, bio, dashboard_bio, screenshot_path, hero_image_path, public_page_mode, created_at")
+    .select(
+      "id, slug, bio, dashboard_bio, screenshot_path, hero_image_path, public_page_mode, landing_cards, created_at"
+    )
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
   const ids = (links ?? []).map((l) => l.id);
-  let clickRows: { link_id: string; visitor_id: string; country: string }[] | null = null;
+  let clickRows: { link_id: string; visitor_id: string; country: string; card_index?: number | null }[] | null =
+    null;
   if (ids.length) {
-    const { data } = await supabase.from("clicks").select("link_id, visitor_id, country").in("link_id", ids);
+    const { data } = await supabase
+      .from("clicks")
+      .select("link_id, visitor_id, country, card_index")
+      .in("link_id", ids);
     clickRows = data;
   }
 
   const stats = statsForLinks(clickRows);
   const statsByLinkId = Object.fromEntries(stats);
+  const initialCardClicksByLinkId = cardClicksByLinkId(clickRows);
 
   const h = await headers();
   const host = h.get("x-forwarded-host") ?? h.get("host") ?? "";
@@ -79,6 +86,7 @@ export default async function DashboardPage() {
         <DashboardSidebarClient
           links={links}
           statsByLinkId={statsByLinkId}
+          cardClicksByLinkId={initialCardClicksByLinkId}
           siteBase={siteBase}
         />
       )}

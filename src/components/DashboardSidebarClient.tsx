@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { updateDashboardLinkProfile } from "@/app/actions/links";
 import { dashboardBioFromRow } from "@/lib/link-bio";
+import { coerceLandingCards } from "@/lib/landing-data";
 import type { LinkStats } from "@/lib/stats";
 import { publicScreenshotUrl } from "@/lib/storage";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
@@ -20,23 +21,33 @@ export type DashboardLinkRow = {
   screenshot_path: string | null;
   hero_image_path?: string | null;
   public_page_mode?: string | null;
+  landing_cards?: unknown;
   created_at: string;
 };
 
 type Props = {
   links: DashboardLinkRow[];
   statsByLinkId: Record<string, LinkStats>;
+  cardClicksByLinkId: Record<string, Record<string, number>>;
   siteBase: string;
 };
 
 const fieldClass =
   "w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 outline-none ring-emerald-500/0 transition placeholder:text-zinc-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20";
 
-export function DashboardSidebarClient({ links, statsByLinkId: initialStatsByLinkId, siteBase }: Props) {
+export function DashboardSidebarClient({
+  links,
+  statsByLinkId: initialStatsByLinkId,
+  cardClicksByLinkId: initialCardClicksByLinkId,
+  siteBase,
+}: Props) {
   const router = useRouter();
   const [selectedId, setSelectedId] = useState<string | null>(links[0]?.id ?? null);
 
   const [liveStatsByLinkId, setLiveStatsByLinkId] = useState<Record<string, LinkStats>>(initialStatsByLinkId);
+  const [liveCardClicksByLinkId, setLiveCardClicksByLinkId] = useState<
+    Record<string, Record<string, number>>
+  >(initialCardClicksByLinkId);
 
   const [draftSlug, setDraftSlug] = useState("");
   const [draftBio, setDraftBio] = useState("");
@@ -99,7 +110,8 @@ export function DashboardSidebarClient({ links, statsByLinkId: initialStatsByLin
 
   useEffect(() => {
     setLiveStatsByLinkId(initialStatsByLinkId);
-  }, [initialStatsByLinkId]);
+    setLiveCardClicksByLinkId(initialCardClicksByLinkId);
+  }, [initialStatsByLinkId, initialCardClicksByLinkId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -114,10 +126,13 @@ export function DashboardSidebarClient({ links, statsByLinkId: initialStatsByLin
             cache: "no-store",
           });
           if (!res.ok || cancelled) return;
-          const data = (await res.json()) as { statsByLinkId?: Record<string, LinkStats> };
-          if (data.statsByLinkId && !cancelled) {
-            setLiveStatsByLinkId(data.statsByLinkId);
-          }
+          const data = (await res.json()) as {
+            statsByLinkId?: Record<string, LinkStats>;
+            cardClicksByLinkId?: Record<string, Record<string, number>>;
+          };
+          if (cancelled) return;
+          if (data.statsByLinkId) setLiveStatsByLinkId(data.statsByLinkId);
+          if (data.cardClicksByLinkId) setLiveCardClicksByLinkId(data.cardClicksByLinkId);
         } catch {
           /* network errors — silent until next poll */
         }
@@ -140,6 +155,13 @@ export function DashboardSidebarClient({ links, statsByLinkId: initialStatsByLin
   }, []);
 
   const stats = selected ? liveStatsByLinkId[selected.id] : undefined;
+
+  const landingCards = useMemo(() => {
+    if (!selected || selected.public_page_mode === "redirect") return [];
+    return coerceLandingCards(selected.landing_cards);
+  }, [selected?.id, selected?.landing_cards, selected?.public_page_mode]);
+
+  const cardCountsForSelected = selected ? liveCardClicksByLinkId[selected.id] : undefined;
 
   const savedShotUrl = selected ? publicScreenshotUrl(selected.screenshot_path) : null;
   const displayShotUrl = clearDashShot ? null : (dashPreviewUrl ?? savedShotUrl);
@@ -372,6 +394,35 @@ export function DashboardSidebarClient({ links, statsByLinkId: initialStatsByLin
                       )}
                     </div>
                   </div>
+
+                  {landingCards.length > 0 ? (
+                    <div className="relative overflow-hidden rounded-2xl border border-zinc-200/90 bg-white/90 p-4 shadow-sm">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-emerald-800/85">
+                        Link card clicks
+                      </p>
+                      <p className="mt-1 text-xs text-zinc-500">
+                        Live tap counts on each card (updates every second).
+                      </p>
+                      <div className="relative z-[1] mt-3 flex flex-wrap gap-2">
+                        {landingCards.map((card, idx) => {
+                          const n = cardCountsForSelected?.[String(idx)] ?? 0;
+                          return (
+                            <div
+                              key={`${idx}-${card.url}`}
+                              className="flex max-w-full min-w-0 items-center gap-2.5 rounded-full border border-emerald-200/70 bg-gradient-to-br from-emerald-50/95 to-teal-50/40 py-2 pl-4 pr-3 shadow-sm shadow-emerald-900/5 ring-1 ring-emerald-500/10"
+                            >
+                              <span className="shrink-0 text-lg font-bold tabular-nums text-emerald-950">
+                                {n}
+                              </span>
+                              <span className="min-w-0 truncate text-sm font-medium text-zinc-800">
+                                {card.label.trim() || "Untitled"}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : null}
 
                   {stats && stats.countries.length > 0 && stats.totalClicks > 0 ? (
                     <CountryChart

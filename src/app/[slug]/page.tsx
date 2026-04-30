@@ -78,6 +78,7 @@ export default async function PublicLinkPage({ params }: PageProps) {
         heroUrl={heroUrl}
         heroFocus={heroFocus}
         cards={cards}
+        linkId={linkId}
       />
     </>
   );
