@@ -67,7 +67,16 @@ export function LinkForm(props: Props) {
   const [heroFocus, setHeroFocus] = useState<ImageFocus>(() =>
     isEdit && link?.landing_hero_focus ? link.landing_hero_focus : { ...DEFAULT_IMAGE_FOCUS }
   );
+  /** Same as heroFocus, updated synchronously on pan so Save always sends the latest framing. */
+  const heroFocusLiveRef = useRef<ImageFocus>(
+    isEdit && link?.landing_hero_focus ? { ...link.landing_hero_focus } : { ...DEFAULT_IMAGE_FOCUS }
+  );
   const heroFileInputRef = useRef<HTMLInputElement>(null);
+
+  const setHeroFocusFromPan = useCallback((next: ImageFocus) => {
+    heroFocusLiveRef.current = next;
+    setHeroFocus(next);
+  }, []);
 
   // Preset state
   const [presetSaveOpen, setPresetSaveOpen] = useState(false);
@@ -105,7 +114,9 @@ export function LinkForm(props: Props) {
     setDisplayName(preset.display_name);
     setHandle(preset.handle);
     setBioLanding(preset.landing_bio);
-    setHeroFocus(preset.landing_hero_focus);
+    const hf = { ...preset.landing_hero_focus };
+    heroFocusLiveRef.current = hf;
+    setHeroFocus(hf);
     setLandingCards(normalizeFeaturedFirst(preset.landing_cards));
     setFile(null);
     if (heroFileInputRef.current) heroFileInputRef.current.value = "";
@@ -130,7 +141,7 @@ export function LinkForm(props: Props) {
     fd.set("handle", handle);
     fd.set("landing_bio", bioLanding);
     fd.set("landing_cards_json", JSON.stringify(landingCardsNormalized));
-    fd.set("landing_hero_focus_json", JSON.stringify(heroFocus));
+    fd.set("landing_hero_focus_json", JSON.stringify(heroFocusLiveRef.current));
     const heroForPreset = file ?? heroFileInputRef.current?.files?.[0] ?? null;
     if (heroForPreset && heroForPreset.size > 0) {
       fd.append("preset_hero_image", heroForPreset, heroForPreset.name);
@@ -171,6 +182,9 @@ export function LinkForm(props: Props) {
   useEffect(() => {
     if (!isEdit || !link) return;
     setLandingHeroStoragePath(link.hero_image_path ?? null);
+    const hf = link.landing_hero_focus ?? { ...DEFAULT_IMAGE_FOCUS };
+    heroFocusLiveRef.current = { ...hf };
+    setHeroFocus({ ...hf });
   }, [isEdit, link?.id]);
 
   const previewSlug =
@@ -225,6 +239,9 @@ export function LinkForm(props: Props) {
     setPending(true);
     const form = e.currentTarget;
     const fd = new FormData(form);
+    fd.set("landing_hero_focus_json", JSON.stringify(heroFocusLiveRef.current));
+    fd.set("landing_cards_json", JSON.stringify(landingCardsNormalized));
+    fd.set("hero_image_storage_path", landingHeroStoragePath ?? "");
     const heroFromInput = heroFileInputRef.current?.files?.[0];
     const heroFile = file ?? heroFromInput ?? null;
 
@@ -783,7 +800,7 @@ export function LinkForm(props: Props) {
             aspectClassName="aspect-[16/10] max-h-44"
             imageUrl={previewHeroUrl}
             value={heroFocus}
-            onChange={setHeroFocus}
+            onChange={setHeroFocusFromPan}
           />
         </div>
       )}
